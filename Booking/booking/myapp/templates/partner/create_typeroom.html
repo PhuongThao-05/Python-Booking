@@ -1,0 +1,161 @@
+{% extends "partner/base_layout.html" %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Add type room</h4>
+          <form class="forms-sample" id="createtyperoomForm">
+            <div class="form-group">
+              <label for="room-name">Type Room Name</label>
+              <input type="text" class="form-control" name="name" id="room-name" placeholder="Name" required>
+            </div>
+            <div class="form-group">
+              <label for="area">Area</label>
+              <input type="number" class="form-control" id="area" value="10" min="10" placeholder="Enter area of the room" required/>
+            </div>
+            <div class="form-group">
+              <label>Room image</label>
+              <input type="file" name="img[]" id="hotel-image" class="file-upload-default" accept="image/*">
+              <div class="input-group col-xs-12">
+                <input type="text" class="form-control file-upload-info" name="image-hotel" id="file-name" disabled placeholder="Upload Image">
+                <span class="input-group-append">
+                  <button class="file-upload-browse btn btn-primary" type="button" id="upload-button">Upload</button>
+                </span>
+              </div>
+              <span id="image-error" class="error-message" style="color: red; display: none;font-size: 0.875rem;line-height: 1.4rem;margin-top: 5px;"></span>  
+            </div>
+            <div>
+              <img id="selected-image" src="#" alt="Selected Image" style="display:none;max-width: 100px;margin: auto;" />
+          </div>              
+            <div class="form-group">
+                <label for="bedType">Choose bed type:</label>
+                <select id="bedType" class="form-control" name="bedType" style="margin-bottom: 15px;padding: 0rem 0.375rem;">
+                    <option value="" disabled selected>Select bed type</option>
+                    <option value="Giường đơn">Giường đơn</option>
+                    <option value="Giường đôi">Giường đôi</option>
+                </select>
+                <span id="bed-errorMessage" style="color: red; display: none;font-size: 0.875rem;line-height: 1.4rem;margin-top: 5px;"></span>  
+            </div>
+            <div class="form-group">
+                <label for="bedQuantity">Quantity of bed:</label>
+                <input id="bedQuantity" class="form-control" name="bedQuantity" type="number" value="1" min="1" max="10"  style="margin-bottom: 15px;">
+            </div>
+            <button type="submit" class="btn btn-primary mr-2">Submit</button>
+            <button class="btn btn-light" id="back-button">Back</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+   
+document.getElementById('upload-button').addEventListener('click', function() {
+  document.getElementById('hotel-image').click();
+});
+
+let selectedImage = null;
+
+document.getElementById('hotel-image').addEventListener('change', function(event) {
+    selectedImage = event.target.files[0]; 
+
+    if (selectedImage) {
+        const objectURL = URL.createObjectURL(selectedImage);
+        const imageElement = document.getElementById('selected-image');
+        document.getElementById('file-name').value = selectedImage.name;
+        imageElement.src = objectURL;
+        imageElement.style.display = 'block';
+    }
+});
+
+
+
+document.getElementById('createtyperoomForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+                const partnerToken = localStorage.getItem('partner_token');
+                const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                if (!partnerToken) {
+                    alert('Chưa đăng nhập');
+                    return;
+                }
+                let hotelImagePath=null;
+                const bedType = document.getElementById('bedType').value;
+                const bedQuantity = document.getElementById('bedQuantity').value;
+                let bed_type=null;
+                const bederr=document.getElementById('bed-errorMessage');
+                if (!bedType) {
+                    bederr.style.display = 'block';
+                    bederr.textContent='Bạn chưa chọn loại giường';
+                    return;
+                } else{
+                    bederr.style.display = 'none';
+                    bed_type= bedQuantity +" "+ bedType;
+                    console.log(bed_type);
+                }
+                if (selectedImage) {
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        
+        try {
+            const uploadResponse = await fetch('/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+                console.log('File path:', uploadData.file_path);
+                hotelImagePath = uploadData.file_path;
+            } else {
+                alert('Có lỗi xảy ra khi tải ảnh lên!');
+            }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                }
+            } else{
+            const errorElement = document.getElementById('image-error');
+            errorElement.textContent = 'Vui lòng chọn ảnh';
+            errorElement.style.display = 'block';
+            return;
+            }
+                const room_name = document.getElementById('room-name').value;
+                const room_image = hotelImagePath;
+                const area = document.getElementById('area').value;
+                const bed=bed_type;
+                const hotelid="{{ hotel_id }}";
+            
+                const addtypeResponse = await fetch(`/add_typeroom/${hotelid}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${partnerToken}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({room_name,room_image,area,bed})
+                });
+                const addtypeData = await addtypeResponse.json();
+
+                if (addtypeData.success) {
+                    alert(addtypeData.message);
+                    window.location.href = `/partner/detail-hotel/${hotelid}`;
+                } else if (addtypeData.error) {
+                    alert(`Error: ${addtypeData.error}`);
+                }
+           
+});
+ document.getElementById('back-button').addEventListener('click', function(){
+      const hotelid="{{ hotel_id }}";
+      window.location.href=`/partner/detail-hotel/${hotelid}`;
+ })
+  </script>
+<style>
+    input[type="radio"] {
+        transform: scale(1.5); /* Tăng kích thước */
+        margin-right: 10px; /* Tạo khoảng cách giữa nút và nhãn */
+    }
+</style>
+{% endblock %}

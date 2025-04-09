@@ -1,0 +1,237 @@
+{% extends "partner/base_layout.html" %}
+{% block content %}
+<!-- Thêm Leaflet CSS và JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<meta name="csrf-token" content="{{ csrf_token }}">
+<!-- Thêm plugin Geocoder -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Add hotel</h4>
+          <form class="forms-sample" id="createhotelForm">
+            <div class="form-group">
+              <label for="hotel-name">Hotel Name</label>
+              <input type="text" class="form-control" name="name" id="hotel-name" placeholder="Name" required>
+            </div>
+         
+            
+            <div class="form-group">
+              <label for="address">Hotel Address</label>
+              <input type="text" class="form-control" id="address" placeholder="Hoặc nhập địa chỉ ở đây" required/>
+              <div id="map" style="height: 250px;"></div>
+            </div>
+            <div class="form-group">
+              <label>File upload</label>
+              <input type="file" name="img[]" id="hotel-image" class="file-upload-default" accept="image/*">
+              <div class="input-group col-xs-12">
+                <input type="text" class="form-control file-upload-info" name="image-hotel" id="file-name" disabled placeholder="Upload Image">
+                <span class="input-group-append">
+                  <button class="file-upload-browse btn btn-primary" type="button" id="upload-button">Upload</button>
+                </span>
+              </div>
+              <span id="image-error" class="error-message" style="color: red; display: none;font-size: 0.875rem;line-height: 1.4rem;margin-top: 5px;"></span>  
+            </div>
+            <div>
+              <img id="selected-image" src="#" alt="Selected Image" style="display:none;max-width: 100px;margin: auto;" />
+          </div>         
+            <div class="form-group">
+              <label for="hotel-description">Description</label>
+              <textarea class="form-control" name="description" id="hotel-description" rows="4"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary mr-2">Submit</button>
+            <button class="btn btn-light" id="back-button">Back</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var map = L.map('map').setView([21.0285, 105.8542], 13); //tọa độ Hà Nội
+  // Thêm bản đồ tile từ OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  // Thêm Geocoder control (để tìm kiếm và chọn địa chỉ)
+  var geocoder = L.Control.geocoder({
+    geocoder: new L.Control.Geocoder.Nominatim({
+        geocodingQueryParams: {
+            countrycodes: 'VN' // Giới hạn tìm kiếm trong Việt Nam
+        }
+    })
+}).addTo(map);
+
+document.addEventListener('DOMContentLoaded', function () {
+    const alternatives = document.querySelector('.leaflet-control-geocoder-alternatives');
+    if (alternatives) {
+        alternatives.addEventListener('wheel', function (e) {
+            e.stopPropagation(); // Ngăn sự kiện cuộn lan tới bản đồ
+        });
+        alternatives.addEventListener('mousedown', function (e) {
+            e.stopPropagation(); // Ngăn sự kiện chuột lan tới bản đồ
+        });
+    }
+});
+
+let marker = null; // Khởi tạo marker là null
+let debounceTimeout = null; // Khởi tạo timeout
+  function addMarker(lat, lng) {
+    clearTimeout(debounceTimeout);
+    if (marker) {
+        map.removeLayer(marker);
+        const markerImg = document.querySelector('.leaflet-marker-icon');
+        if (markerImg) {
+            markerImg.remove();  
+        }
+        marker = null; 
+    }
+    marker = L.marker([lat, lng]).addTo(map);
+
+    const addressField = document.getElementById('address');
+    addressField.value = 'Đang tải...';
+
+    debounceTimeout = setTimeout(() => fetchAddressFromLatLng(lat, lng), 300); // Đợi 300ms
+}
+
+// Khi người dùng click vào bản đồ
+map.on('click', function (e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    addMarker(lat, lng);
+});
+
+// Khi người dùng tìm kiếm
+geocoder.on('markgeocode', function(e) {
+    const lat = e.geocode.center.lat;
+    const lng = e.geocode.center.lng;
+    addMarker(lat, lng);
+});
+
+
+      // Dùng reverse geocoding để lấy địa chỉ từ tọa độ
+    function fetchAddressFromLatLng(lat, lng) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+        .then(response => response.json())
+        .then(data => {
+            const address = parseAddress(data.address);
+            document.getElementById('address').value = address;
+        })
+        .catch(err => console.error('Error fetching address:', err));
+}
+
+function parseAddress(address) {
+    const components = [];
+
+    if (address.house_number) components.push(address.house_number);
+    if (address.road) components.push(address.road);
+    if (address.suburb || address.city_district) components.push(address.suburb || address.city_district);
+    if (address.city || address.town || address.village) components.push(address.city || address.town || address.village);
+    if (address.state) components.push(address.state);
+    if (address.country) components.push(address.country);
+
+    // Nối các phần tử trong mảng thành chuỗi với dấu phẩy
+    return components.join(', ');
+}
+
+document.getElementById('upload-button').addEventListener('click', function() {
+  document.getElementById('hotel-image').click();
+});
+
+let selectedImage = null;
+
+document.getElementById('hotel-image').addEventListener('change', function(event) {
+    selectedImage = event.target.files[0]; 
+
+    if (selectedImage) {
+        const objectURL = URL.createObjectURL(selectedImage);
+        const imageElement = document.getElementById('selected-image');
+        document.getElementById('file-name').value = selectedImage.name;
+        imageElement.src = objectURL;
+        imageElement.style.display = 'block';
+    }
+});
+
+
+
+document.getElementById('createhotelForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    if (selectedImage) {
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+            const uploadResponse = await fetch('/upload/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            });
+            const uploadData = await uploadResponse.json();
+            if (uploadData.success) {
+                console.log('File path:', uploadData.file_path);
+                const hotelImagePath = uploadData.file_path;
+                const partnerToken = localStorage.getItem('partner_token');
+                if (!partnerToken) {
+                    alert('Chưa đăng nhập');
+                    return;
+                }
+
+                const name = document.getElementById('hotel-name').value;
+                const address = document.getElementById('address').value;
+                const description = document.getElementById('hotel-description').value;
+                const imagehotel = hotelImagePath;
+               
+                // Gửi yêu cầu thêm khách sạn
+                const addHotelResponse = await fetch('/add_hotel/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${partnerToken}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({name,address,description,imagehotel})
+                });
+                const addHotelData = await addHotelResponse.json();
+
+                if (addHotelData.success) {
+                    alert(addHotelData.message);
+                    window.location.href = '/partner/hotel';
+                } else if (addHotelData.error) {
+                    alert(`Error: ${addHotelData.error}`);
+                }
+            } else {
+                alert('Có lỗi xảy ra khi tải ảnh lên!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        }
+    } else{
+      const errorElement = document.getElementById('image-error');
+      errorElement.textContent = 'Vui lòng chọn ảnh';
+      errorElement.style.display = 'block';
+    }
+});
+ document.getElementById('back-button').addEventListener('click', function(){
+      window.location.href='/partner/hotel/';
+ })
+  </script>
+  <style>
+.leaflet-control-geocoder {
+    z-index: 1000; /* Đảm bảo control luôn ở trên cùng */
+}
+
+.leaflet-control-geocoder-alternatives {
+    max-height: 200px; /* Chiều cao tối đa */
+    overflow-y: auto; /* Cuộn dọc */
+    background-color: white; /* Nền trắng để dễ nhìn */
+    border: 1px solid #ccc; /* Đường viền */
+    padding: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Hiệu ứng nổi */
+}
+
+  </style>
+{% endblock %}

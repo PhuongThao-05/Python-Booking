@@ -1,0 +1,204 @@
+{% extends 'admin/base_layout.html' %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>  
+<section class="section">
+    <div class="section-header">
+      <h1>Hotels traffic report</h1>
+    </div>
+    <div class="section-body">
+      <div class="row">
+        <div class="card" style="flex-grow: 1;">
+            <div style="align-items: center;flex-direction: row;display: flex;gap: 30px;padding: 15px;">
+                <div>
+                    <label>Loại báo cáo:</label>
+                    <select id="selectType" style="height: 45px;width: 120px;text-align: center;border: 1px solid #dadada;border-radius: 5px;margin-bottom: 0.5rem;">
+                        <option value="month">Theo tháng</option>
+                        <option value="year">Theo năm</option>
+                    </select>
+                </div>
+                <div>
+                    <label> Month:</label>
+                    <select id="selectMonth"
+                    style="height: 45px;width: 100px;text-align: center;border: 1px solid #dadada;border-radius: 5px;margin-bottom: 0.5rem;"></select>
+                </div>
+                <div>
+                    <label> Year:</label>
+                    <select id="selectYear"
+                        style="height: 45px;width: 100px;text-align: center;border: 1px solid #dadada;border-radius: 5px;margin-bottom: 0.5rem;"></select>
+                </div>
+            </div>
+            <h5 style="text-align:center;">Top 10 hotels have many order completed and canceled</h5>
+            <div class="chart-container">
+                <canvas id="completedChart"></canvas>
+                <canvas id="canceledChart"></canvas>
+
+            </div>
+          </div>
+      </div>
+    </div>
+  </section>
+    
+<script>
+      const admin_token = localStorage.getItem('admin_token');
+      const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      document.addEventListener('DOMContentLoaded', async function(){
+        const selectYear = document.getElementById('selectYear');
+        const selectMonth = document.getElementById('selectMonth');
+        const selectType = document.getElementById('selectType');
+        let years = [];
+        let months = [];
+    async function fetchYearsAndMonths() {
+        const response = await fetch('/get_month_and_year/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + admin_token
+            }
+        });
+        const result = await response.json();
+        if (result.success) {
+            years = result.year || [];
+            months = result.month || [];
+            console.log(years);
+            console.log(months);
+        } else {
+            console.error(result.error);
+        }
+        // Thêm các năm vào dropdown
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            selectYear.appendChild(option);
+        });
+        if (years.length > 0) {
+            const firstYear = years[0];
+            selectYear.value = firstYear;
+        } else {
+            console.error("Dữ liệu năm không có sẵn!");
+        }
+        months.forEach(month => {
+            const option = document.createElement('option');
+            option.value = month;
+            option.textContent = month;
+            selectMonth.appendChild(option);
+        });
+        if (months.length > 0) {
+            const firstMonth = months[0];
+            selectMonth.value = firstMonth;
+        } else {
+            console.error("Dữ liệu tháng không có sẵn!");
+        }
+
+        updateSelection();
+    }
+    selectYear.addEventListener('change', handleSelectionChange);
+    selectMonth.addEventListener('change', handleSelectionChange);
+
+    function handleSelectionChange() {
+        const statisticType = selectType.value;
+        const selectedYear = selectYear.value;
+        const selectedMonth = selectMonth.value;
+
+        if (statisticType === "year") {
+            selectMonth.disabled = true;
+            Statistic(null,selectedYear);
+        } else {
+            selectMonth.disabled = false;
+            Statistic(selectedMonth, selectedYear);
+        }
+    }
+
+    async function Statistic(month, year) {
+    let requestData = { year };
+    if (month) requestData.month = month;
+
+    const response = await fetch(`/hotel_traffic_report/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + admin_token,
+            'X-CSRFToken': csrftoken,
+        },
+        body: JSON.stringify(requestData)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        const hotelsCompleted = Object.keys(result.top_completed);
+        const completedCounts = Object.values(result.top_completed).map(item => item.completed);
+        const hotelsCanceled = Object.keys(result.top_canceled);
+        const canceledCounts = Object.values(result.top_canceled).map(item => item.canceled);
+
+        if (window.completedChart && typeof window.completedChart.destroy === 'function') {
+            window.completedChart.destroy();
+        }
+        const completedChartElement = document.getElementById("completedChart");
+        completedChartElement.width = 1200;
+        completedChartElement.height = 430;
+        window.completedChart = new Chart(completedChartElement.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: hotelsCompleted,
+                datasets: [{
+                    label: "Order completed",
+                    data: completedCounts,
+                    backgroundColor: "rgba(54, 162, 235, 0.6)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        if (window.canceledChart && typeof window.canceledChart.destroy === 'function') {
+            window.canceledChart.destroy();
+        }
+
+        const canceledChartElement = document.getElementById("canceledChart");
+        canceledChartElement.width = 1200;
+        canceledChartElement.height = 430;
+        window.canceledChart = new Chart(canceledChartElement.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: hotelsCanceled,
+                datasets: [{
+                    label: "Order canceled",
+                    data: canceledCounts,
+                    backgroundColor: "rgba(255, 99, 132, 0.6)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    } else {
+        console.error('Error!', result.error || 'Failed to confirm hotel.', 'error');
+    }
+}
+
+                    fetchYearsAndMonths();
+                    function updateSelection() {
+                    if (selectType.value === "year") {
+                        selectMonth.disabled = true;
+                    } else {
+                        selectMonth.disabled = false;
+                    }
+                    handleSelectionChange();
+                }
+
+                selectType.addEventListener('change', updateSelection);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zxx">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Sona Template">
+    <meta name="keywords" content="Sona, unica, creative, html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Your cart</title>
+    {% load static %}
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Cabin:400,500,600,700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'partner/images/favicon.png' %}" />
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="{% static 'customer/css/bootstrap.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/font-awesome.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/elegant-icons.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/flaticon.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/owl.carousel.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/nice-select.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/jquery-ui.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/magnific-popup.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/slicknav.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/style.css' %}" type="text/css">
+    <script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>    
+    <link rel="stylesheet" href="/static/customer/css/cart-css.css" type="text/css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/static/customer/js/customer/check_token_customer.js" defer></script>
+</head>
+<body>
+    <style>
+        .menu-item {
+        -webkit-box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+        box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+        }
+    </style>
+    <!-- Header Section Begin -->
+    <header class="header-section">
+        <div class="menu-item">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-2">
+                        <div class="logo" style="padding: 10px 0px;">
+                            <a href="/customer/home/">
+                                <img src="{% static 'customer/img/Agoda_transparent_logo.png' %}" alt="" style="width: 110px;">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-10">
+                        <div class="nav-menu">
+                            <nav class="mainmenu">
+                                <ul>
+                                    <li class="{% if request.path == '/customer/home/' %}active{% endif %}"><a href="/customer/home/">Home</a></li>
+                                    <li class="{% if request.path == '/customer/hotel/' %}active{% endif %}"><a href="/customer/hotel/">Hotels</a></li>
+                                    <li><a href="./about-us.html">About Us</a></li>                                                                  
+                                    <li><a href="./contact.html">Contact</a></li>
+                                    <li class="user-account"><img src="{% static 'customer/img/cute-little-schoolboy-graduation.png' %}" style="border: 1px solid #a7a5a57a;width: 40px;border-radius: 50%;" alt="">
+                                        <span id="name-user" style=" text-transform: uppercase;cursor: pointer;"> </span>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="flag-dropdown" style="display: none;">
+        <ul>
+            <li><a href="/customer/profile/" style="text-decoration: none;color: black;">Hồ sơ của tôi</a></li>
+            <li><a href="/customer/my-order/" style="text-decoration: none;color: black;">Đơn đặt chỗ</a></li>
+            <li><a href="/customer/review/" style="text-decoration: none;color: black;">Nhận xét của tôi</a></li>
+            <li id="log-out-user"><a>Đăng xuất</a></li>
+        </ul>
+    </div>
+    <script>
+       document.addEventListener('DOMContentLoaded', async function(){
+                customer_token=localStorage.getItem('customer_token');
+                if(customer_token){  
+                    document.querySelector('.user-account').style.display='inline-block';
+                            
+                    customer_name=localStorage.getItem('customer_name');
+                    if(customer_name){
+                        document.getElementById('name-user').innerHTML=`${customer_name} <i class="fa fa-angle-down"></i>`;
+                    }
+                    const userName = document.getElementById('name-user');
+                    const dropdown = document.querySelector('.flag-dropdown');
+                    userName.addEventListener('click', function (event) {
+                        dropdown.style.display = 'block';
+                        event.stopPropagation();
+                    });
+                    document.addEventListener('click', function () {
+                        dropdown.style.display = 'none';
+                    });
+                    dropdown.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                    });
+                    document.getElementById('log-out-user').addEventListener('click',function(){
+                        localStorage.removeItem('customer_name');
+                        localStorage.removeItem('customer_token');
+                        localStorage.removeItem('count_item');
+                        location.reload();
+                    });
+                    const csrftoken=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    Clear_cart_item(customer_token,csrftoken);
+                    async function Count_cart(customer_token) {
+                        const response = await fetch(`/count_item_cart/`,{
+                        method:'GET',
+                        headers:{
+                            'Authorization':`Bearer ${customer_token}`
+                        }
+                    });
+                    const result=await response.json();
+                    if(result.success){
+                        const count_item=result.count;
+                        localStorage.setItem('count_item',count_item);
+                    } else{
+                        console.error(result.error);
+                    }           
+                    }
+                    Count_cart(customer_token);
+                    if(localStorage.getItem('count_item')){
+                        document.querySelector('.count-item-incart').innerHTML=`Your cart (${localStorage.getItem('count_item')})`;
+                    }
+                    const response = await fetch('/list_in_cart/',{
+                        method:'GET',
+                        headers:{
+                            'Authorization':`Bearer ${customer_token}`,
+                        }
+                    });
+                    const result = await response.json();
+                    console.log(result.list_cart);
+                    if(result.success){
+                        const cart=document.querySelector('cart-details');
+                        const referencele=document.querySelector('.title-cart');
+                        const data= result.list_cart;
+                        if (data.length > 0) {
+                        let statepay=null;
+                        data.forEach(item => {
+                            const element=document.createElement('div');
+                            element.classList.add('info-item');
+                            item.room.forEach(roomInfo => {
+                            roomInfo.type_room.forEach(typeRoom => {
+                            typeRoom.hotel.forEach(hotel => {
+                            
+                            let total=roomInfo.price*item.days;
+                            element.innerHTML=`
+                             <div style="float: right;">
+                <button type="button" data-cart-item="${item.idcart}" class="remove-button"><i class="fa-solid fa-trash-can"></i><span >Remove</span></button>
+            </div>
+            <div class="detail-room-item">
+                <div class="cart-item">
+                    <img src="${hotel.hotel_image}" alt="Room Image">
+                    <div class="cart-item-details">
+                        <div style="display: flex;flex-direction: column;gap: 10px;">
+                        <h3>${hotel.hotel_name}</h3>
+                        <div>
+                            <i class="fa-solid fa-location-dot"></i>
+                            ${hotel.address}
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-room-item">
+                    <div>
+                        <input type="checkbox" class="select-item" style="transform: scale(1.8);" data-price="${total}" data-id="${item.idcart}"/>
+                    </div>
+                    <div>
+                    <p style="margin: 0px;color: rgb(49, 112, 231);line-height: calc(20.33px);font-size: 18.5px;">
+                        <strong><span class="quantity-room">1</span>x ${typeRoom.type_room}</strong></p>
+                    <div style="font-size: 13px;display: flex;flex-direction: column;margin: 5px 0;gap: 5px;">
+                    <span><i class="fa-solid fa-calendar-days"></i> ${item.datestart} — ${item.dateend}</span>
+                    <span><i class="fa-solid fa-person"></i> Guest: ${roomInfo.capacities.map(capacity => `${capacity.quantity} ${capacity.type_person}`).join(' ')}</span>
+                        <span> Price: ${roomInfo.price.toLocaleString('vi-VN')} ₫</span>
+                    </div>
+                    </div>
+                    <div style="flex: 1;display: flex;flex-direction: column;align-items: flex-end;">
+                        <span class="total-cost" style="font-size:13px;">Total</span>
+                        <span class="price" style="font-size:x-large;font-weight: 600;">${total.toLocaleString('vi-VN')} ₫</span>
+                    </div>
+                </div>
+            </div>
+                            `;
+                        });
+                    });
+                });                
+                referencele.insertAdjacentElement('afterend', element);
+            });
+        } else{
+            document.querySelector('.next-button').classList.add('disabled');
+        }
+                    }
+                } else{
+                    document.querySelector('.user-account').style.display='none';
+                }
+                document.querySelectorAll('.select-item').forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        handleSelectItem(this);
+                    });
+                });
+                function handleSelectItem(checkbox) {
+                const selectedCheckboxes = document.querySelectorAll('.select-item:checked');
+                let total_order = 0;
+                selectedCheckboxes.forEach(checkbox => {
+                    total_order += parseFloat(checkbox.getAttribute('data-price'));
+                });
+                document.querySelector('.total-price').textContent = `₫ ${total_order.toLocaleString('vi-VN')}`;
+            }
+
+        document.querySelector('.cart-details').addEventListener('click', async function (e) {
+        if (e.target.closest('.remove-button')) {
+            const button = e.target.closest('.remove-button');
+            const idcart = button.getAttribute('data-cart-item');
+            const csrftoken=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            Swal.fire({
+                title:'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, remove it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/delete_item_cart/${idcart}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${customer_token}`,
+                                'X-CSRFToken': csrftoken
+                            }
+                        });
+
+                        const result = await response.json();
+                        if (response.ok && result.success) {
+                            location.reload();
+                            localStorage.setItem('count_item',(localStorage.getItem('count_item')-1))
+                        } else {
+                            console.error('Error!', result.error);
+                        }
+                    } catch (error) {
+                      console.error('Error!', 'An error occurred while deleting the cart item.', 'error');
+                    }
+                }
+                    });
+                }
+            });
+
+            document.querySelector('.next-button').addEventListener('click',async function(){
+                const selectedItems = [];
+                const checkboxes = document.querySelectorAll('.select-item:checked'); 
+
+                checkboxes.forEach(checkbox => {
+                    const idcart = checkbox.getAttribute('data-id');
+                    selectedItems.push({idcart});
+                });
+                if (selectedItems.length === 0){
+                    return;
+                }
+                const csrftoken=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response=await fetch("/store_cart/",{
+                    method:'POST',
+                    headers:{
+                        'Authorization':`Bearer ${customer_token}`,
+                        'X-CSRFToken':csrftoken,
+                    },
+                    body:JSON.stringify({selectedItems, order_type:'cart'})
+                });
+                 const result = await response.json();
+                 if(result.success){
+                    window.location.href='/customer/book/';
+                 }
+            });
+            async function Clear_cart_item(customer_token,csrf_token) {
+                const response=await fetch('/clear_cart/',{
+                    method:'POST',
+                    headers:{
+                        'Authorization':`Bear ${customer_token}`,
+                        'X-CSRFToken':csrf_token,
+                    }
+                });
+                const result=await response.json();
+                if(result.success){
+                    console.log(result.delete_count+result.message);
+                    localStorage.setItem('count_item',(localStorage.getItem('count_item')-result.delete_count))
+                } else{
+                    console.error('Xảy ra lỗi!');
+                }
+            }
+            });       
+    </script>
+    <div class="cart-container">
+    <div class="cart-details">
+        <div class="title-cart">
+        <h2 style="margin: 10px;font-size: 25px;font-weight: 600;" class="count-item-incart"></h2>
+        </div>
+        <!--  -->
+    </div>
+    <div class="cart-summary">
+        <div style="display: flex;flex-direction: row;justify-content: space-between;">
+        <p style="margin: 0;font-size: 18px;line-height: 21px;font-weight: 500;">Total price</p>
+        <p class="total-price" style="margin: 0;font-size: 18px;line-height: 21px;font-weight: 500;">₫ 0</p>
+        </div>
+        <a class="next-button" style="color: white;">Next</a>
+    </div>
+</div>
+<style>
+    .flag-dropdown ul li{
+    padding: 10px 0;
+    list-style: none;
+    text-align: left;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: 500;
+    }
+    .flag-dropdown{
+    cursor: pointer;
+    float: right;
+    position: absolute;
+    right: 110px;
+    top: 65px;
+    box-shadow: 0px 9px 10px rgba(25, 25, 26, 0.2);
+    z-index: 100;
+    min-width: 250px;
+    background: #ffffff;
+    display: block;
+    padding: 10px 15px;
+    }
+    .menu-item .nav-menu .mainmenu li.log-sign-up{
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    }
+    a.next-button.disabled {
+    pointer-events: none;  
+    opacity: 0.5;         
+    text-decoration: none; 
+}
+</style>
+</body>
+</html>

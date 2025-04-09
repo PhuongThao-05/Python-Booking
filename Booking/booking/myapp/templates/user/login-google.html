@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Success</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log('{{ user_info|escapejs }}');
+            const user_info = JSON.parse('{{ user_info|escapejs }}');
+            if(user_info.role==="customer"){
+                localStorage.setItem(`${user_info.role}_token`, user_info.token);
+                localStorage.setItem(`${user_info.role}_name`, user_info.name);
+                window.location.href='/customer/home/';
+            } else{
+                localStorage.setItem(`${user_info.role}_token`, user_info.token);
+                localStorage.setItem(`${user_info.role}_name`, user_info.name);
+                window.location.href='/partner/home/';
+            }
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

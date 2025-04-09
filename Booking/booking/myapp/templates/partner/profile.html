@@ -1,0 +1,155 @@
+{% extends "partner/base_layout.html" %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<div class="container">
+    <div class="main-body">
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex flex-column align-items-center text-center">
+                            <img src="/static/partner/images/cute-little-schoolboy-graduation.png" class="rounded-circle p-1 bg-primary" width="110">
+                            <div class="mt-3">
+                                <h4 id="name-title"></h4>
+                                <p class="text-secondary mb-1">Business Owner</p>
+                                <button class="btn btn-primary">Follow</button>
+                                <button class="btn btn-outline-primary">Message</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Full Name</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="text" id='name' class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Email</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="text" id='email' class="form-control" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Phonenumber</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="text" id="phonenumber" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-3"></div>
+                            <div class="col-sm-9 text-secondary">
+                                <input type="button" id="edit-button" class="btn btn-primary px-4" value="Save Changes">
+                            </div>
+                        </div>
+                    </div>
+                </div>					
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const partnertoken=localStorage.getItem('partner_token');
+    document.addEventListener('DOMContentLoaded',async function(){
+        if(!partnertoken){
+            console.log('Bạn cần đăng nhập!');
+            return;
+        }
+        const response= await fetch('/edit_profile/',{
+            method:'GET',
+            headers:{
+                'Authorization':`Bearer ${partnertoken}`,
+            }
+        });
+        const result = await response.json();
+        if(result.success)
+        {
+            const data=result.partnerinfo;
+            document.getElementById('name').value=`${data.name}`;
+            document.getElementById('name-title').innerText=`${data.name}`;
+            document.getElementById('email').value=`${data.email}`;
+            document.getElementById('phonenumber').value=`${data.phonenumber}`;
+        } else{
+            console.error(result.error);
+        }
+     document.getElementById('edit-button').addEventListener('click',async function(){
+        const name=  document.getElementById('name').value;
+        const phonenumber= document.getElementById('phonenumber').value;
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        if(!name||!phonenumber)
+        {
+            location.reload();
+            return;
+        }
+        const response= await fetch('/edit_profile/',{
+            method:'POST',
+            headers:{
+                'Authorization':`Bearer ${partnertoken}`,
+                'X-CSRFToken':csrftoken,
+            },
+            body: JSON.stringify({name,phonenumber})
+        });
+        const result = await response.json();
+        if(result.success)
+        {
+            localStorage.setItem('partner_name',result.name);
+            window.location.reload();
+        } else{
+            console.error(result.error);
+        }
+     })
+    })
+</script>
+<style>
+.btn-primary {
+    color: #fff;
+    background-color: #223e9c;
+    border-color: #223e9c;
+    }
+    .btn-primary:hover {
+    color: #fff;
+    background-color: #4b6ad0;
+    border-color: #4b6ad0;
+    }
+    .btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+    color: #fff;
+    background-color: #4b6ad0;
+    border-color: #4b6ad0;
+    }
+    .btn-outline-primary {
+    color: #223e9c;
+    border-color: #223e9c;
+    }
+    .btn-outline-primary:hover {
+    color: #fff;
+    background-color: #223e9c;
+    border-color: #223e9c;
+}
+.card {
+position: relative;
+display: flex;
+flex-direction: column;
+min-width: 0;
+word-wrap: break-word;
+background-color: #fff;
+background-clip: border-box;
+border: 0 solid transparent;
+border-radius: .25rem;
+margin-bottom: 1.5rem;
+box-shadow: 0 2px 6px 0 rgb(218 218 253 / 65%), 0 2px 6px 0 rgb(206 206 238 / 54%);
+}
+.me-2 {
+margin-right: .5rem!important;
+}
+</style>
+{% endblock %}

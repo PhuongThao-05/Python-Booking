@@ -1,0 +1,224 @@
+{% extends 'customer/base_layout_self.html' %}
+{% block sub_content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        .content-order {
+            width: 100%;
+            min-height: 255px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 10px 0 10px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #dddddd7a;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            color: gray;
+        }
+        .tab.active {
+            color: #f3a558;;
+            border-bottom: 3px solid #ffbf7f;
+        }
+        .order-content {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .order-content-detail{
+            background-color: #fffdfa96;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            box-shadow: 0px 0px 9px 1px #b8b8b870;
+            cursor: pointer;
+        }
+        .icon {
+            font-size: 50px;
+            color: #dfa974;
+        }
+        .order-item{
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 5px;
+        border-bottom: 1px dashed #cdcdcd;
+        }
+        .container-review {
+            display: flex;
+            align-items: center;
+        }
+        .score-box {
+            background-color: #dfa974;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            width: 55px;
+        }
+        .review-summary {
+            margin-left: 15px;
+            flex: 1;
+        }
+        .review-summary h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .criteria {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .criteria-item {
+            width: 50%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .criteria-item span {
+            margin-left: 10px;
+            font-size: 15px;
+            line-height: 1.8em;
+            font-weight: 500;
+        }
+        .bar-container {
+            flex-grow: 1;
+            background: #E0E0E0;
+            height: 4px;
+            margin: 0 10px;
+            border-radius: 3px;
+            position: relative;
+        }
+        .bar {
+            background: #dfa974;
+            height: 100%;
+            border-radius: 3px;
+        }
+        .container-commend{
+            margin: 5px 0px 5px 70px;
+        }
+        .rate-score{
+            padding: 5px 0px 5px 0px;
+            width: 45px;
+            text-align: center;
+            background-color: #dfa9745e;
+            border-radius: 8px;
+        }
+    </style>
+<meta name="csrf-token" content="{{ csrf_token }}">
+<div class="container-fluid">
+    <div class="container">
+        <div class="main-body">
+            
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const token_customer=localStorage.getItem('customer_token');
+        const response= await fetch('/lst_review/',{
+            method:'GET',
+            headers:{
+                'Authorization':`Bear ${token_customer}`,
+            }
+        });
+        const result=await response.json();
+        if(result.success){
+            console.log(result.review);
+        let contentDiv = document.querySelector('.main-body');
+        let data = result.review;
+
+        contentDiv.innerHTML='';
+        if (data.length === 0) { 
+            contentDiv.innerHTML = `<div class="content-order"><div class="icon">📝</div><p>Không có đánh giá nào</p><div class="content-order">`;
+        } else {
+            data.forEach(item => {
+                const element = document.createElement('div');
+                element.classList.add('content-order');
+
+                element.innerHTML = `
+                    <p style="margin-bottom: 5px;">
+                        <img src="/static/customer/img/cute-little-schoolboy-graduation.png" 
+                             style="border: 1px solid #a7a5a57a;width: 30px;border-radius: 50%;" alt="">
+                        <span style="font-size: 15px;">${item.customer} - ${item.email}</span>
+                         <span style="font-size: 15px;float: right;">${item.created_at}</span>
+                    </p>
+                    <div class="container-review">
+                        <div class="score-box">${item.rate}</div>
+                        <div class="review-summary">
+                            <div class="criteria">
+                                <div class="criteria-item">
+                                    <span class="rate-title">Vị trí</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_location*10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_location}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Độ sạch sẽ</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_clean*10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_clean}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Tiện nghi</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_utility*10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_utility}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Dịch vụ</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_service*10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_service}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Đáng giá tiền</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_cost*10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_cost}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style=" margin: 5px 0px 5px 70px;background: #d2caca29;padding: 5px;border-radius: 5px;">
+                        <ul style="list-style: none;text-align: justify;display:flex;gap:15px;">
+                            <li>
+                                <img src="${item.room_img}" alt="Room Image" style="width: 100px;border-radius: 8px;"></li>
+                            <li style="display:flex;flex-direction: column;font-size:12px;">
+                             <span>${item.hotel}</span>
+                              <span> ${item.type_room} ${item.area} m<sup>2</sup> ${item.bed}</span>
+                                <span> Giá: ${item.price.toLocaleString('vi-VN')} VNĐ/night</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="container-commend">
+                        <h5 style="font-weight: 600;">
+                            <i class="fa-solid fa-quote-left"></i><span style="margin:0 5px;">${item.title}</span><i class="fa-solid fa-quote-right"></i></h5>
+                        <p>${item.commend}</p>
+                    </div>
+                `;
+
+                contentDiv.appendChild(element);
+            });
+        }
+    }
+    });
+</script>
+{% endblock %}

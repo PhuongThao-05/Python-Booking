@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
+  <title>Login- Agoda Administrator</title>
+  <!-- General CSS Files -->
+  <link rel="stylesheet" href="/static/admin/assets/modules/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/admin/assets/modules/fontawesome/css/all.min.css">
+  <!-- CSS Libraries -->
+  <link rel="stylesheet" href="/static/admin/assets/modules/bootstrap-social/bootstrap-social.css">
+  <!-- Template CSS -->
+  <link rel="stylesheet" href="/static/admin/assets/css/style.css">
+  <link rel="stylesheet" href="/static/admin/assets/css/components.css">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+<!-- Start GA -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-94034622-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-94034622-3');
+</script>
+<!-- /END GA --></head>
+
+<body>
+  <div id="app">
+    <section class="section">
+      <div class="container mt-5">
+        <div class="row">
+          <div class="col-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-3 col-xl-4 offset-xl-4">
+            <div class="login-brand" style="margin: 0;margin-bottom: 10px;">
+              <img src="/static/partner/images/Agoda_transparent_logo.png" alt="logo" width="150" style="background-color: white;
+              border-radius: 15px;" class="shadow-light">
+            </div>
+
+            <div class="card card-primary">
+              <div class="card-header"><h4>Login</h4></div>
+
+              <div class="card-body">
+                <form id="adminlogin">
+                    <div class="invalid-feedback" style="    margin: 5px 0;font-size: 15px;">
+                        
+                      </div>
+                  <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" class="form-control" name="email" tabindex="1" required autofocus>
+                    
+                  </div>
+
+                  <div class="form-group">
+                    <div class="d-block">
+                    	<label for="password" class="control-label">Password</label>
+                      <div class="float-right">
+                        <a href="auth-forgot-password.html" class="text-small">
+                          Forgot Password?
+                        </a>
+                      </div>
+                    </div>
+                    <input id="password" type="password" class="form-control" name="password" tabindex="2" required>
+                  </div>
+
+                  <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" name="remember" class="custom-control-input" tabindex="3" id="remember-me">
+                      <label class="custom-control-label" for="remember-me">Remember Me</label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" tabindex="4">
+                      Login
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+            <div class="mt-5 text-muted text-center">
+              Don't have an account? <a href="auth-register.html">Create One</a>
+            </div>
+            <div class="simple-footer">
+              Copyright &copy; Stisla 2018
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    document.getElementById('adminlogin').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  
+        try {
+            const response = await fetch('/admin_login_page/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({ email, password }),
+            });
+  
+            const result = await response.json();
+  
+            if (result.success) {
+                alert(result.message);
+                document.querySelector('.invalid-feedback').style.display='none';
+                localStorage.setItem('admin_token',result.token);
+                const params = new URLSearchParams(window.location.search);
+                const redirectUrl = params.get('redirect');
+                if (redirectUrl) {
+                window.location.href = redirectUrl; 
+                } else {
+                    window.location.href = '/ad/home/'; 
+                }
+            } else {
+                document.querySelector('.invalid-feedback').style.display='block';
+                document.querySelector('.invalid-feedback').innerHTML=`${result.error}`;
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    });
+  </script>
+  
+  <!-- General JS Scripts -->
+  <script src="/static/admin/assets/modules/jquery.min.js"></script>
+  <script src="/static/admin/assets/modules/popper.js"></script>
+  <script src="/static/admin/assets/modules/tooltip.js"></script>
+  <script src="/static/admin/assets/modules/bootstrap/js/bootstrap.min.js"></script>
+  <script src="/static/admin/assets/modules/nicescroll/jquery.nicescroll.min.js"></script>
+  <script src="/static/admin/assets/modules/moment.min.js"></script>
+  <script src="/static/admin/assets/js/stisla.js"></script>
+  <script src="/static/admin/assets/js/scripts.js"></script>
+  <script src="/static/admin/assets/js/custom.js"></script>
+</body>
+</html>

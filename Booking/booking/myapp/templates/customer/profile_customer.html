@@ -1,0 +1,158 @@
+{% extends 'customer/base_layout_self.html' %}
+{% block sub_content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<div class="container-fluid">
+    <div class="container" style="max-width: 100%;">
+        <div class="main-body">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex flex-column align-items-center text-center">
+                                <img src="/static/partner/images/cute-little-schoolboy-graduation.png" class="rounded-circle p-1 bg-primary" width="110">
+                                <div class="mt-3">
+                                    <h4 id="name-title"></h4>
+                                    <p class="text-secondary mb-1">My account</p>
+                                    <button class="btn btn-primary">Follow</button>
+                                    <button class="btn btn-outline-primary">Message</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card" style="height: 100%;">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Full Name</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <input type="text" id='name' class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Email</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <input type="text" id='email' class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Phonenumber</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <input type="text" id="phonenumber" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3"></div>
+                                <div class="col-sm-9 text-secondary">
+                                    <input type="button" id="edit-button" class="btn btn-primary px-4" value="Save Changes">
+                                </div>
+                            </div>
+                        </div>
+                    </div>					
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const customertoken=localStorage.getItem('customer_token');
+    document.addEventListener('DOMContentLoaded',async function(){
+        if(!customertoken){
+            console.log('Bạn cần đăng nhập!');
+            return;
+        }
+        const response= await fetch('/customer_edit_profile/',{
+            method:'GET',
+            headers:{
+                'Authorization':`Bearer ${customertoken}`,
+            }
+        });
+        const result = await response.json();
+        if(result.success)
+        {
+            const data=result.partnerinfo;
+            document.getElementById('name').value=`${data.name}`;
+            document.getElementById('name-title').innerText=`${data.name}`;
+            document.getElementById('email').value=`${data.email}`;
+            document.getElementById('phonenumber').value=`${data.phonenumber}`;
+        } else{
+            console.error(result.error);
+        }
+     document.getElementById('edit-button').addEventListener('click',async function(){
+        const name=  document.getElementById('name').value;
+        const phonenumber= document.getElementById('phonenumber').value;
+        const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        if(!name||!phonenumber)
+        {
+            location.reload();
+            return;
+        }
+        const response= await fetch('/customer_edit_profile/',{
+            method:'POST',
+            headers:{
+                'Authorization':`Bearer ${customertoken}`,
+                'X-CSRFToken':csrftoken,
+            },
+            body: JSON.stringify({name,phonenumber})
+        });
+        const result = await response.json();
+        if(result.success)
+        {
+            localStorage.setItem('customer_name',result.name);
+            window.location.reload();
+        } else{
+            console.error(result.error);
+        }
+     })
+    })
+</script>
+<style>
+    h4,h6,h3{
+        font-family: "Cabin", sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    .title-sub-content{
+    color: #dfa974;
+    font-weight: 500;
+    font-size: 1.6rem;
+    }
+    .title-sub-content:hover,.title-sub-content:focus{
+    text-decoration: none;
+    outline: none;
+    color: #d69b61;
+    }
+    .bg-primary {
+    background-color: #dfa974 !important;
+    }
+    .btn-primary {
+    color: #fff;
+    background-color: #dfa974;
+    border-color: #dfa974;
+    }
+    .btn-primary:hover {
+    color: #fff;
+    background-color: #d69b61;
+    border-color: #d69b61;
+    }
+    .btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+    color: #fff;
+    background-color: #d69b61;
+    border-color: #d69b61;
+    }
+    .btn-outline-primary {
+    color: #dfa974;
+    border-color: #dfa974;
+    }
+    .btn-outline-primary:hover {
+    color: #fff;
+    background-color: #dfa974;
+    border-color: #dfa974;
+}
+</style>
+{% endblock %}

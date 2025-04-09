@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Sona Template">
+    <meta name="keywords" content="Sona, unica, creative, html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Booking</title>
+    {% load static %}
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Cabin:400,500,600,700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'partner/images/favicon.png' %}" />
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="{% static 'customer/css/bootstrap.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/font-awesome.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/elegant-icons.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/flaticon.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/owl.carousel.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/nice-select.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/jquery-ui.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/magnific-popup.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/slicknav.min.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'customer/css/style.css' %}" type="text/css">
+    <script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/customer/css/cart-css.css" type="text/css" />
+    <script src="/static/customer/js/customer/check_token_customer.js" defer></script>
+</head>
+
+<body>
+
+    <body>
+        <style>
+            .menu-item {
+                -webkit-box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+                box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+            }
+
+            .flag-dropdown ul li {
+                padding: 10px 0;
+                list-style: none;
+                text-align: left;
+                font-size: 14px;
+                text-transform: uppercase;
+                font-weight: 500;
+            }
+
+            .flag-dropdown {
+                cursor: pointer;
+                float: right;
+                position: absolute;
+                right: 110px;
+                top: 65px;
+                box-shadow: 0px 9px 10px rgba(25, 25, 26, 0.2);
+                z-index: 100;
+                min-width: 250px;
+                background: #ffffff;
+                display: block;
+                padding: 10px 15px;
+            }
+
+            .menu-item .nav-menu .mainmenu li.log-sign-up {
+                display: inline-flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+            }
+        </style>
+        <!-- Header -->
+        <header class="header-section">
+            <div class="menu-item">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-2">
+                            <div class="logo" style="padding: 10px 0px;">
+                                <a href="/customer/home/">
+                                    <img src="{% static 'customer/img/Agoda_transparent_logo.png' %}" alt=""
+                                        style="width: 110px;">
+                                </a>
+                            </div>
+                        </div>
+                        <div id="countdown-timer" class="col-lg-7"
+                            style="text-align: center;margin-top: 20px;font-size: 20px;color:red;">
+                            ⏰ Thời gian còn lại: <span id="time">10:00</span>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="nav-menu">
+                                <nav class="mainmenu" style="    margin-top: 16px;">
+                                    <ul>
+                                        <li class="user-account"><img
+                                                src="{% static 'customer/img/cute-little-schoolboy-graduation.png' %}"
+                                                style="border: 1px solid #a7a5a57a;width: 40px;border-radius: 50%;"
+                                                alt="">
+                                            <span id="name-user" style=" text-transform: uppercase;cursor: pointer;">
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="flag-dropdown" style="display: none;">
+            <ul>
+                <li id="go-back-user"><a>Thoát</a></li>
+            </ul>
+        </div>
+        <script>
+            const idroom = "{{ room_id }}";
+        </script>
+        <script>
+            let item_booking=[]
+            let id_customer=null
+            let id_payment=null
+            let total_price = 0;
+            document.addEventListener('DOMContentLoaded', async function () {
+                const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                customer_token = localStorage.getItem('customer_token');
+                if (customer_token) {
+                    document.querySelector('.user-account').style.display = 'inline-block';
+
+                    customer_name = localStorage.getItem('customer_name');
+                    if (customer_name) {
+                        document.getElementById('name-user').innerHTML = `${customer_name} <i class="fa fa-angle-down"></i>`;
+                    }
+                    const userName = document.getElementById('name-user');
+                    const dropdown = document.querySelector('.flag-dropdown');
+                    userName.addEventListener('click', function (event) {
+                        dropdown.style.display = 'block';
+                        event.stopPropagation();
+                    });
+                    document.addEventListener('click', function () {
+                        dropdown.style.display = 'none';
+                    });
+                    dropdown.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                    });
+                    document.getElementById('go-back-user').addEventListener('click', function () {
+                        window.history.back();
+                    });
+                    let timeLeft = 5 * 60;
+
+                    function startCountdown() {
+                        const timerElement = document.getElementById("time");
+                        const countdown = setInterval(() => {
+                            const minutes = Math.floor(timeLeft / 60);
+                            const seconds = timeLeft % 60;
+                            timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                            timeLeft--;
+                            if (timeLeft < 0) {
+                                clearInterval(countdown);
+                                alert("Hết thời gian!");
+                                window.history.back();
+                            }
+                        }, 1000);
+                    }
+                    startCountdown();
+                    let type_payment=null;
+                    const eWalletRadio = document.getElementById("e-wallet");
+                    const optionEpayment = document.getElementById("option-e-payment");
+                    const zalopayOption = document.getElementById("zalopay");
+                    const momoOption = document.getElementById("momo");
+                    const paypalOption = document.getElementById("paypal");
+                    const payonsite = document.getElementById("pay-onsite");
+
+                    eWalletRadio.addEventListener("change", function () {
+                        optionEpayment.style.display = "block";
+                        id_payment=parseInt(eWalletRadio.value);
+                    });
+                    payonsite.addEventListener("change", function () {
+                        optionEpayment.style.display = "none";
+                        type_payment='onsite';
+                        id_payment= parseInt(payonsite.value);
+                        const eWalletMethods = document.getElementsByName("e-wallet-method");
+                        eWalletMethods.forEach(function(method) {
+                            method.checked = false;
+                        });
+                    });
+                    zalopayOption.addEventListener("change", function () {
+                        type_payment='zalopay';
+                    });
+
+                    momoOption.addEventListener("change", function () {
+                        type_payment='momo';
+                    });
+                    paypalOption.addEventListener("change", function () {
+                        type_payment='paypal';
+                    });
+
+                    document.querySelector('.booking-button').addEventListener('click', async function () {
+                        if(!type_payment){
+                            alert('Bạn chưa chọn phương thức thanh toán!');
+                        } else if(type_payment=='zalopay'){
+                        await booking_detail();
+                        const payment_url = await fetch('/zalo_payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${customer_token}`,
+                                'X-CSRFToken': csrftoken
+                            },
+                            body: JSON.stringify({ amount: total_price })
+                        });
+                        const result = await payment_url.json();
+                        if (result.success) {
+                            window.location.href = `${result.url}`;
+                        } else {
+                            console.error(result.error);
+                        }
+                    } else if(type_payment=='momo'){
+                        await booking_detail();
+                        const payment_url = await fetch('/create_momo_payment/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${customer_token}`,
+                                'X-CSRFToken': csrftoken
+                            },
+                            body: JSON.stringify({ amount: total_price})
+                        });
+                        const result = await payment_url.json();
+                        if (result.success) {
+                            window.location.href = `${result.payUrl}`;
+                        } else {
+                            console.error(result.error);
+                        }
+
+                    }
+                    else if(type_payment=='paypal'){
+                        await booking_detail();
+                        const payment_url = await fetch('/payment_paypal/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${customer_token}`,
+                                'X-CSRFToken': csrftoken
+                            },
+                            body: JSON.stringify({ amount: total_price })
+                        });
+                        const result = await payment_url.json();
+                        if (result.success) {
+                            window.location.href = `${result.paypal_url}`;
+                        } else {
+                            console.error(result.error);
+                        }
+                    }
+                    else if(type_payment=='onsite'){
+                            await booking_detail();
+                            const response = await fetch('/order_booking/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            window.location.href = `/return-payment/`;
+                        } else {
+                            console.error(result.error);
+                        }    
+                    }
+                    });
+                }
+                let list_item_order = null;
+                if (idroom) {
+                    list_item_order = await fetch(`/item_order/${idroom}/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${customer_token}`
+                        }
+                    });
+                    const result = await list_item_order.json();
+                    if (result.success) {
+                        console.log(result.order_info);
+                        console.log(result.customer);
+                        const customer = result.customer;
+                        document.querySelector('.user-info').innerHTML = `
+                         <h4 style="margin-bottom: 15px;">Thông tin khách hàng</h4>
+                        <p>${customer.name}</p>
+                        <p>${customer.email}</p>
+                        `;
+                        id_customer=customer.idcustomer;
+
+                        const data = result.order_info;
+                        const booking = document.querySelector('.booking-details');
+                        const bill = document.querySelector('.bill-info');
+                        const hotel = document.createElement('div');
+                        const detail_bill = document.createElement('div');
+                        detail_bill.classList.add('bill');
+                        hotel.classList.add('hotel-info');
+
+                        data.forEach(room => {
+                            room.type_room.forEach(type => {
+                                type.hotel.forEach(htl => {
+                                    let price = room.price * customer.days;
+                                    total_price = +price;
+                                    hotel.innerHTML = `
+                             <img src="${htl.hotel_image}" alt="" style="max-width: 200px;height: 80px;border-radius: 10px;">
+                        <div>
+                        <h5 style="font-size: 16px;">${htl.hotel_name}</h5>
+                        <div class="rating">
+                            <i class="icon_star" style="color: #e7d807;"></i>
+                            <i class="icon_star" style="color: #e7d807;"></i>
+                            <i class="icon_star" style="color: #e7d807;"></i>
+                            <i class="icon_star" style="color: #e7d807;"></i>
+                            <i class="icon_star-half_alt" style="color: #e7d807;"></i>
+                        </div>
+                        <p>${htl.address}</p>
+                        <p>1 x ${type.type_room} (${type.area} m<sup>2</sup>)</p>
+                        <p>Check-in: ${customer.date_in} → Check-out: ${customer.date_out} | ${customer.days} <span>đêm</span></p>
+                        <p>Tối đa : ${room.capacities.map(capacity => `${capacity.quantity} ${capacity.type_person}`).join(' ')}</p>
+                        <ul>
+                            ${room.utilities.map(utility => `<li><i class="fa-solid fa-check"></i>${utility.service_name}</li>`).join(' ')}
+                        </ul>
+                        </div>
+                            `;
+                                    detail_bill.innerHTML = `
+                            <div class="order-hotel">
+                                <p>${htl.hotel_name} <span>1 X phòng  ${customer.days} X đêm</span></p>
+                            </div>
+                            <div class="order-price">
+                                <p>${price.toLocaleString('vi-VN')} VNĐ</p>
+                            </div>
+                            `;
+                                    bill.append(detail_bill);
+                                    booking.append(hotel);
+                                    item_booking.push({
+                                        'idroom': room.idroom,
+                                        'date_arrive': customer.date_in,
+                                        'date_leave': customer.date_out
+                                    });
+                                });
+                            });
+                        });
+                        console.log(total_price);
+                        document.querySelector('.total-price').innerText = `${total_price.toLocaleString('vi-VN')} VNĐ`;
+                    } else {
+                        console.log(result.error);
+                    }
+                } else {
+                    list_item_order = await fetch(`/show_store_cart/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${customer_token}`
+                        }
+                    });
+
+                    const result = await list_item_order.json();
+                    if (result.success) {
+                        console.log(result.order_info);
+                        console.log(result.customer);
+                        const customer = result.customer;
+                        document.querySelector('.user-info').innerHTML = `
+                        <h4 style="margin-bottom: 15px;">Thông tin khách hàng</h4>
+                        <p>${customer.name}</p>
+                        <p>${customer.email}</p>
+                    `;
+                        id_customer=customer.idcustomer;
+                        const data = result.order_info;
+                        const booking = document.querySelector('.booking-details');
+                        const bill = document.querySelector('.bill-info');
+                     
+
+                        data.forEach(item => {
+                            item.room.forEach(roominfo => {
+                                roominfo.type_room.forEach(type => {
+                                    type.hotel.forEach(htl => {
+                                        let price = roominfo.price * item.days;
+                                        total_price += price;
+
+                                        const hotelDiv = document.createElement('div');
+                                        hotelDiv.classList.add('hotel-info');
+                                        hotelDiv.innerHTML = `
+                                        <img src="${htl.hotel_image}" alt="" style="max-width: 200px;height: 80px;border-radius: 10px;">
+                                        <div>
+                                            <h5 style="font-size: 16px;">${htl.hotel_name}</h5>
+                                            <div class="rating">
+                                                <i class="icon_star" style="color: #e7d807;"></i>
+                                                <i class="icon_star" style="color: #e7d807;"></i>
+                                                <i class="icon_star" style="color: #e7d807;"></i>
+                                                <i class="icon_star" style="color: #e7d807;"></i>
+                                                <i class="icon_star-half_alt" style="color: #e7d807;"></i>
+                                            </div>
+                                            <p>${htl.address}</p>
+                                            <p>1 x ${type.type_room} (${type.area} m<sup>2</sup>)</p>
+                                            <p>Check-in: ${item.datestart} → Check-out: ${item.dateend} | ${item.days} <span>đêm</span></p>
+                                            <p>Tối đa : ${roominfo.capacities.map(capacity => `${capacity.quantity} ${capacity.type_person}`).join(' ')}</p>
+                                            <ul>
+                                                ${roominfo.utilities.map(utility => `<li><i class="fa-solid fa-check"></i>${utility.service_name}</li>`).join(' ')}
+                                            </ul>
+                                        </div>
+                                    `;
+                                        booking.appendChild(hotelDiv);
+                                        
+                                        item_booking.push({
+                                        'idroom': roominfo.idroom,
+                                        'date_arrive': item.datestart,
+                                        'date_leave': item.dateend
+                                        });
+
+                                        const detailBillDiv = document.createElement('div');
+                                        detailBillDiv.classList.add('bill');
+                                        detailBillDiv.innerHTML = `
+                                        <div class="order-hotel">
+                                            <p>${htl.hotel_name} <span>1 X phòng ${item.days} X đêm</span></p>
+                                        </div>
+                                        <div class="order-price">
+                                            <p>${price.toLocaleString('vi-VN')} VNĐ</p>
+                                        </div>
+                                    `;
+                                        bill.appendChild(detailBillDiv);
+                                    });
+                                });
+                            });
+                        });
+                        document.querySelector('.total-price').innerText = `${total_price.toLocaleString('vi-VN')} VNĐ`;
+                    } else {
+                        console.log(result.error);
+                    }
+                } 
+                async function booking_detail() {
+                  const response = await fetch(`/item_booking/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${customer_token}`,
+                            'X-CSRFToken':csrftoken
+                        },
+                        body:JSON.stringify({item_booking,id_payment,id_customer, total_price})
+                    });
+                const result= await response.json();
+                if(result.success){
+                    console.log(result.data);
+                }
+                }
+            });
+          
+        </script>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="main-info">
+                <!-- User Information Section -->
+                <section class="user-info">
+
+                </section>
+
+                <section class="payment-info">
+                    <h4>Thông tin thanh toán</h4>
+                    <div class="options" style="    margin-top: 15px;">
+                        <div>
+                            <input type="radio" id="e-wallet" name="payment-method" value="1">
+                            <label for="e-wallet">Thanh toán bằng ví điện tử</label>
+                            <ul id="option-e-payment" style="list-style: none;margin-left: 30px;display: none;">
+                                <li> <input type="radio" id="zalopay" name="e-wallet-method">
+                                    <label for="zalopay">Thanh toán bằng Zalopay</label>
+                                </li>
+                                <li> <input type="radio" id="momo" name="e-wallet-method">
+                                    <label for="momo">Thanh toán bằng Momo</label>
+                                </li>
+                                <li> <input type="radio" id="paypal" name="e-wallet-method">
+                                    <label for="paypal">Thanh toán bằng Paypal</label>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <input type="radio" id="pay-onsite" name="payment-method" value="2">
+                            <label for="pay-onsite">Thanh toán tại nơi ở</label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Final Button -->
+                <div class="final-step">
+                    <button class="booking-button">Đặt chỗ ngay</button>
+                </div>
+            </div>
+            <div class="booking-info">
+                <section class="booking-details">
+
+                </section>
+                <div class="detail-bill">
+                    <h4>Chi tiết giá</h4>
+                    <div class="bill-info">
+
+                    </div>
+                    <div class="total">
+                        <p style="color: black;font-size: 20px;">Tổng cộng</p>
+                        <p class="total-price"></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer Section Begin -->
+        <footer class="footer-section">
+            <div class="container">
+                <div class="footer-text">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="ft-about">
+                                <div class="logo">
+                                    <a href="#">
+                                        <img src="{% static 'customer/img/Agoda_transparent_logo.png' %}" alt=""
+                                            style="width: 110px;background-color: #ffffff;border-radius: 10px;">
+                                    </a>
+                                </div>
+                                <p>We inspire and reach millions of travelers<br /> across 90 local websites</p>
+                                <div class="fa-social">
+                                    <a href="#"><i class="fa fa-facebook"></i></a>
+                                    <a href="#"><i class="fa fa-twitter"></i></a>
+                                    <a href="#"><i class="fa fa-instagram"></i></a>
+                                    <a href="#"><i class="fa fa-youtube-play"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 offset-lg-1">
+                            <div class="ft-contact">
+                                <h6>Contact Us</h6>
+                                <ul>
+                                    <li>(12) 345 67890</li>
+                                    <li>info.colorlib@gmail.com</li>
+                                    <li>856 Cordia Extension Apt. 356, Lake, United State</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 offset-lg-1">
+                            <div class="ft-newslatter">
+                                <h6>New latest</h6>
+                                <p>Get the latest updates and offers.</p>
+                                <form action="#" class="fn-form">
+                                    <input type="text" placeholder="Email">
+                                    <button type="submit"><i class="fa fa-send"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright-option">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <ul>
+                                <li><a href="#">Contact</a></li>
+                                <li><a href="#">Terms of use</a></li>
+                                <li><a href="#">Privacy</a></li>
+                                <li><a href="#">Environmental Policy</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="co-text">
+                                <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                                    Copyright &copy;
+                                    <script>document.write(new Date().getFullYear());</script> All rights reserved |
+                                    This template is made with <i class="fa fa-heart" aria-hidden="true"></i> by <a
+                                        href="https://colorlib.com" target="_blank">Colorlib</a>
+                                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- Footer Section End -->
+
+        <!-- Search model Begin -->
+        <div class="search-model">
+            <div class="h-100 d-flex align-items-center justify-content-center">
+                <div class="search-close-switch"><i class="icon_close"></i></div>
+                <form class="search-model-form">
+                    <input type="text" id="search-input" placeholder="Search here.....">
+                </form>
+            </div>
+        </div>
+        <!-- Search model end -->
+
+        <!-- Js Plugins -->
+        <script src="{% static 'customer/js/jquery-3.3.1.min.js' %}"></script>
+        <script src="{% static 'customer/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'customer/js/jquery.magnific-popup.min.js' %}"></script>
+        <script src="{% static 'customer/js/jquery.nice-select.min.js' %}"></script>
+        <script src="{% static 'customer/js/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'customer/js/jquery.slicknav.js' %}"></script>
+        <script src="{% static 'customer/js/owl.carousel.min.js' %}"></script>
+        <script src="{% static 'customer/js/main.js' %}"></script>
+        <style>
+            .hotel-info {
+                display: flex;
+                flex-direction: row;
+                gap: 15px;
+            }
+
+            .hotel-info ul {
+                list-style: none;
+                height: 80px;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+                gap: 2px;
+                color: #39aa39;
+            }
+
+            .hotel-info ul li {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+            }
+
+            .hotel-info p {
+                margin: 5px 0;
+                font-size: 14px !important;
+            }
+
+            .detail-room-info p {
+                color: black;
+                margin: 5px 0;
+            }
+
+            .main-content {
+                padding: 20px;
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                margin: auto;
+            }
+
+            .main-info {
+                flex-grow: 3;
+            }
+
+            .booking-info {
+                flex-grow: 1;
+            }
+
+            .date-trip {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 50px !important;
+            }
+
+            .during-time {
+                display: flex;
+                flex-direction: row;
+                gap: 50px;
+            }
+
+            .date-trip p,
+            .during-time p {
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                font-size: 18px;
+                color: black;
+            }
+
+            .order-hotel p {
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: center;
+                font-size: 18px;
+                color: black;
+            }
+
+            .order-price p {
+                margin: 0;
+            }
+
+            .bill,
+            .total {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                margin: 10px 0;
+            }
+
+            .date-trip p span,
+            .during-time p span,
+            .order-hotel p span {
+                font-size: 14px;
+                color: #424242c7;
+            }
+
+            .user-info,
+            .payment-info,
+            .final-step,
+            .date-trip,
+            .detail-bill,
+            .booking-details {
+                background-color: white;
+                padding: 20px;
+                margin-bottom: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+
+
+            .options div {
+                margin-bottom: 10px;
+            }
+
+            .final-step {
+                text-align: center;
+                margin-top: 20px;
+            }
+
+            .final-step .booking-button {
+                padding: 15px 30px;
+                background-color: #dfa974;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                cursor: pointer;
+                width: 100%;
+            }
+
+            .final-step .booking-button:hover {
+                background-color: #d69b61;
+            }
+        </style>
+    </body>
+
+</html>

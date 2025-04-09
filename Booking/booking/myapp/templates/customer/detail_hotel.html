@@ -1,0 +1,630 @@
+{% extends 'customer/base_layout.html' %}
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Breadcrumb Section Begin -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="breadcrumb-text">
+                    <h2>Detail hotel</h2>
+                    <div class="bt-option">
+                        <a href="/customer/home/">Home</a>
+                        <a href="/customer/hotel/">Hotels</a>
+                        <span>Detail Hotel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumb Section End -->
+
+<!-- Room Details Section Begin -->
+<section class="room-details-section spad">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="room-details-item">
+
+                </div>
+                <div class="choose-date">
+                    <div class="check-date">
+                        <label for="date-start">Check In:</label>
+                        <input type="date" class="date-choice" id="date-start">
+                        <i class="icon_calendar"></i>
+                    </div>
+                    <div class="check-date">
+                        <label for="date-end">Check Out:</label>
+                        <input type="date" class="date-choice" id="date-end">
+                        <i class="icon_calendar"></i>
+                    </div>
+                </div>
+                <div class="choose-room">
+                    <h4 class="title-choose-room"
+                        style="margin: 10px 0px;padding-top: 30px;border-top: 1px solid #e5e5e5;">Choose Room</h4>
+
+                </div>
+                <div class="rd-reviews" style="display: flex;flex-direction: column;">
+                    <h4>Reviews</h4>
+                </div>
+                <button id="btnMore" style="display: none;">Xem thêm</button>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    const hotel_id = "{{ hotel_id }}";
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        flatpickr("#date-start", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date(),
+            minDate: new Date(new Date().setDate(new Date().getDate())),
+        });
+        flatpickr("#date-end", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+            minDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+        });
+        document.getElementById('date-start').addEventListener('change', function () {
+            const startDate = new Date(this.value);
+            startDate.setDate(startDate.getDate() + 1);
+            const endDate = startDate.toISOString().split('T')[0];
+            flatpickr("#date-end", {
+                dateFormat: "Y-m-d",
+                defaultDate: endDate,
+                minDate: endDate,
+            });
+            document.getElementById('date-end').value = endDate;
+            getDataHotel(this.value, endDate);
+        });
+        getDataHotel(document.getElementById('date-start').value, document.getElementById('date-end').value);
+        async function getDataHotel(date_start, date_end) {
+            try {
+                const response = await fetch(`/detail_hotel/${hotel_id}/${date_start}/${date_end}`, { method: 'GET' });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                if (result.success && Array.isArray(result.hotels)) {
+                
+                    const data = result.hotels[0];
+                    const hotelcontainer = document.querySelector('.room-details-item');
+                    hotelcontainer.innerHTML = `
+                <img src="${data.hotel_image}" style="display: block;margin: auto;margin-bottom: 40px;max-height: 400px;" alt="">
+                    <div class="rd-text">
+                       <div class="rd-title">
+                            <h3>${data.hotel_name}</h3>
+                            <div class="rdt-right">
+                                <div class="rating">
+                                   <button class="contact-hotel-button" data-email="${data.partner_email}" data-phone="${data.partner_phone}" data-hotel="${data.hotel_name}">
+                                <i class="fa-solid fa-message feather-icon" style="color:white;"></i> Contact info</button>
+                                </div>
+                            </div>
+                        </div>
+                        <h2>${data.begin_price.toLocaleString('vi-VN')}<span> VNĐ/Pernight</span></h2>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td class="r-o">Address:</td>
+                                    <td>${data.hotel_address}</td>
+                                </tr>
+                                <tr>
+                                    <td class="r-o">Services:</td>
+                                    <td>Wifi, Television, Bathroom,...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="f-para">
+                            ${data.description}
+                        </p>
+                    </div>
+                    `;
+                    const typeroom = document.querySelector('.choose-room');
+                    const referenceElement = typeroom.querySelector('.title-choose-room');
+                    const existingRoomTypes = typeroom.querySelectorAll('.type-room');
+                    existingRoomTypes.forEach(item => item.remove());
+                    data.type_rooms.forEach(item => {
+                        const itemtype = document.createElement('div');
+                        itemtype.classList.add('type-room');
+                        let roomHTML = item.rooms.map(room => {
+                            return `
+                        <div class="item-sup-room">
+                            <div class="item-room">
+                                <h6>Giá này đã bao gồm</h6> 
+                                <div>
+                                    ${room.utilities.map(utility => `<div><i class="fa-solid fa-check"></i> ${utility.service_name}</div>`).join('')}
+                                </div> 
+                            </div>
+                            <div class="item-room">
+                                <h6>Sức chứa</h6>  
+                                <div>                                     
+                                    ${room.capacities.map(capacity => `<div> ${capacity.quantity} ${capacity.type_person}</div>`).join('')}
+                                </div> 
+                            </div>
+                            <div class="item-room">
+                                <h6>Giá phòng/đêm</h6> 
+                                <div>                                     
+                                    ${room.price.toLocaleString('vi-VN')} VNĐ
+                                </div>  
+                            </div>
+                            <div class="item-room">
+                                <h6 style="text-align: center;">Đặt nhiều nhất</h6>  
+                                <div>                                     
+                                    <div class="max-order">
+                                        <span>1</span>                                          
+                                    </div>
+                                    <div class="button-feature-order">
+                                        <button type="button" data-id-room="${room.idroom}" class="button-order place-order" style="background: #dfa974;color: white;border: none;">Đặt ngay</button>
+                                        <button type="button" data-id-room="${room.idroom}" class="button-order add-to-cart" style="color: #dfa974;background-color: white;border: 1px solid #dfa974;">Thêm vào xe đẩy hàng</button>
+                                    </div>
+                                </div> 
+                            </div>
+                        </div>
+                    `;
+                        }).join('');
+                        itemtype.innerHTML = `
+                        <h6 style="border-bottom: 1px solid #dddddd;font-size: 22px;">${item.type_name}</h6>
+                        <div class="detail-room">
+                            <div class="item-room" style="margin-right: 10px;">
+                                <h6>Loại phòng</h6>
+                                <div style="display: flex;flex-direction: column;gap: 10px;">
+                                    <img src="${item.room_img}" style="max-width: 220px;" alt="">
+                                    <div style="color: #4a4a4a;"><i class="fas fa-bed"></i> ${item.bed}</div>
+                                    <div style="color: #4a4a4a;"><i class="fas fa-ruler-combined"></i> Diện tích phòng: ${item.area} m<sup>2</sup></div>
+                                </div>  
+                            </div>
+                            <div class="contain-detail-room">
+                             ${roomHTML}
+                            </div>
+                        </div>
+                   `;
+                        referenceElement.insertAdjacentElement('afterend', itemtype);
+                    });
+                } else {
+                    console.error('No hotels found in the response!');
+                }
+            } catch (error) {
+                console.error('Error fetching hotels:', error);
+            }
+            document.querySelector('.contact-hotel-button').addEventListener('click',async function () {
+            const partner_email=this.getAttribute('data-email');
+            const phone=this.getAttribute('data-phone');
+            const hotel=this.getAttribute('data-hotel');
+        Swal.fire({
+            title: 'Contact',
+            html: `
+          <div class="container">
+            <div class="contact-text">
+                <p>Let's contact them to explain all your questions for your order.</p>
+                <table style="margin:auto;">
+                    <tbody>
+                        <tr>
+                            <td class="c-o">Hotel:</td>
+                            <td>${hotel}</td>
+                        </tr>
+                        <tr>
+                            <td class="c-o">Email:</td>
+                            <td>${partner_email}</td>
+                        </tr>
+                        <tr>
+                            <td class="c-o">Phone:</td>
+                            <td>${phone}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+</div>
+            `,
+            showCancelButton: true,
+            showConfirmButton:false,
+            cancelButtonText: 'Đóng',
+            customClass: {
+             cancelButton:'swal-button custom-cancel'
+            }
+        });
+});
+        }
+
+        
+
+        document.querySelector('.choose-room').addEventListener('click', async function (event) {
+            const customer_token = localStorage.getItem('customer_token');
+            const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            if (event.target.classList.contains('place-order') || event.target.classList.contains('add-to-cart')) {
+                if (!customer_token) {
+                    const currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = `/login?redirect=${encodeURIComponent(currentUrl)}`;
+                }
+            }
+            if (event.target.classList.contains('add-to-cart')) {
+                const idroom = event.target.getAttribute('data-id-room');
+                const datestart = document.getElementById('date-start').value;
+                const dateend = document.getElementById('date-end').value;
+                const response = await fetch(`/add_to_cart/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${customer_token}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ idroom, datestart, dateend })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    const response = await fetch(`/count_item_cart/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${customer_token}`
+                        }
+                    });
+                    const result_cart = await response.json();
+                    if (result_cart.success) {
+                        const count_item = result_cart.count;
+                        localStorage.setItem('count_item', count_item);
+                        document.getElementById('count-item-cart').innerText = `${localStorage.getItem('count_item')}`;
+                    } else {
+                        console.error(result_cart.error);
+                    }
+                } else {
+                    console.error(result.error);
+                }
+            }
+            if (event.target.classList.contains('place-order')) {
+                const idroom = event.target.getAttribute('data-id-room');
+                const datestart = document.getElementById('date-start').value;
+                const dateend = document.getElementById('date-end').value;
+                const response = await fetch(`/item_order/${idroom}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${customer_token}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ datestart, dateend, order_type: 'driect' })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    window.location.href = `/customer/book/${idroom}`;
+                } else {
+                    console.error('Error' + result.error);
+                }
+            }
+        });
+        const btnMore = document.getElementById("btnMore");
+        const response = await fetch(`/show_review/${hotel_id}`, {
+            method: 'GET',
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            console.log(result.review);
+            let contentDiv = document.querySelector('.rd-reviews h4');
+            let data = result.review;
+            let currentIndex = 0; 
+            const reviewsPerPage = 2; 
+            const fragment = document.createDocumentFragment();
+            const reviewContainer = document.createElement('div');
+            reviewContainer.classList.add('review-container');
+
+            function renderReviews() {
+                for (let i = currentIndex; i < currentIndex + reviewsPerPage && i < data.length; i++) {
+                    const item = data[i];
+                    const element = document.createElement('div');
+                    element.classList.add('review-item');
+
+                    element.innerHTML = `
+                    <div class="ri-pic">
+                        <div class="score-box">${item.rate}</div>
+                        <div class="info-review">
+                            <span style="font-size: 15px;"><i class="far fa-user"></i> ${item.customer}</span>
+                            <span><i class="fa-solid fa-bed"></i> ${item.type_room} ${item.bed}</span>
+                            <span><i class="fa-regular fa-calendar"></i> Đã ở ${item.days} đêm</span>
+                        </div>
+                    </div>
+                    <div class="ri-text" style="flex:1;">
+                        <div class="rating-icon">
+                            <span>${item.created_date}</span>
+                            <div class="rating">
+                                <i class="icon_star"></i>
+                                <i class="icon_star"></i>
+                                <i class="icon_star"></i>
+                                <i class="icon_star"></i>
+                                <i class="icon_star-half_alt"></i>
+                            </div>
+                        </div>
+                        <div class="review-summary">
+                            <div class="criteria">
+                                <div class="criteria-item">
+                                    <span class="rate-title">Vị trí</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_location * 10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_location}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Độ sạch sẽ</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_clean * 10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_clean}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Tiện nghi</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_utility * 10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_utility}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Dịch vụ</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_service * 10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_service}</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span>Đáng giá tiền</span>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: ${item.score_cost * 10}%;"></div>
+                                    </div>
+                                    <span class="rate-score">${item.score_cost}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h5><i class="fa-solid fa-quote-left"></i> ${item.title} <i class="fa-solid fa-quote-right"></i></h5>
+                        <p>${item.commend}</p>
+                    </div>
+                `;
+
+                    fragment.appendChild(element);
+                }
+                reviewContainer.appendChild(fragment);
+                currentIndex += reviewsPerPage; 
+
+                if (currentIndex >= data.length) {
+                    btnMore.style.display = 'none';
+                }
+            }
+
+            renderReviews(); 
+
+            btnMore.style.display = data.length > reviewsPerPage ? 'block' : 'none';
+            btnMore.addEventListener('click', renderReviews);
+
+            contentDiv.after(reviewContainer);
+            reviewContainer.after(btnMore);
+        }
+    });
+
+</script>
+<!-- Room Details Section End -->
+<style>
+    #btnMore{
+    display: block;
+    border: none;
+    background: none;
+    font-size: 18px;
+    width: fit-content;
+    margin: auto;
+    }
+    #btnMore:hover{
+    color: #dfa974;
+    text-decoration: underline;
+    }
+    .rating-icon {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .rd-reviews .review-item {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .rd-reviews .review-item .ri-text:before {
+        display: none;
+    }
+
+    .rd-reviews .review-item .ri-text .rating {
+        position: unset !important;
+    }
+
+    .review-summary h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .criteria {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .criteria-item {
+        width: 50%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .criteria-item span {
+        margin-left: 10px;
+        font-size: 15px;
+        line-height: 1.8em;
+        font-weight: 500;
+    }
+
+    .bar-container {
+        flex-grow: 1;
+        background: #E0E0E0;
+        height: 4px;
+        margin: 0 10px;
+        border-radius: 3px;
+        position: relative;
+    }
+
+    .bar {
+        background: #dfa974;
+        height: 100%;
+        border-radius: 3px;
+    }
+
+    .rate-score {
+        padding: 5px 0px 5px 0px;
+        width: 45px;
+        text-align: center;
+        background-color: #dfa9745e;
+        border-radius: 8px;
+    }
+
+    .review-summary {
+        background-color: #eff8ff52;
+        padding: 5px;
+        border-radius: 8px;
+    }
+
+    .review-summary span {
+        color: black !important;
+    }
+
+    .score-box {
+        background-color: #dfa974;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        width: 60px;
+        margin: auto;
+    }
+
+    .info-review {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-top: 10px;
+        gap: 5px;
+    }
+
+    .type-room {
+        border: 1px solid #e0e0e0;
+        padding: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .detail-room {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        margin-bottom: 2rem;
+        padding: 15px;
+        background-color: #ececec8a;
+    }
+
+    .contain-detail-room {
+        flex-grow: 200;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .item-sup-room {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        background-color: white;
+        padding: 10px;
+    }
+
+    h6 {
+        font-size: 16px;
+        margin: 15px 0px;
+    }
+
+    .item-room {
+        flex-grow: 1;
+    }
+
+    .max-order {
+        margin: auto;
+        width: 50px;
+        height: 45px;
+        background-color: #e9ebee;
+        border: 1px solid #dddfe2;
+        border-radius: 3px;
+        cursor: not-allowed;
+        font-size: 16px;
+        padding: 10px 0;
+        text-align: center;
+    }
+
+    .button-feature-order {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .button-order {
+        font-size: 13px;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 14px 28px 13px;
+    }
+
+    .button-order:hover {
+        background-color: #d69b61 !important;
+        color: white !important;
+    }
+
+    .date-choice {
+        padding: 5px;
+        text-align: center;
+        border: 1px solid #d1cfcf;
+        border-radius: 5px;
+    }
+
+    .choose-date {
+        display: flex;
+        flex-direction: row;
+        gap: 35px;
+        justify-content: flex-end;
+    }
+    .contact-hotel-button{
+    border: 1px solid #ea9a6f;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 20px;
+    background: #dfa974;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    }
+
+  .swal-button{
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #ffffff;
+    letter-spacing: 2px;
+    border: none;
+    padding: 14px 34px 13px;
+    width: 150px;
+  }
+  .custom-cancel{
+    background: #6e7881;
+}
+</style>
+{% endblock %}

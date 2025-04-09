@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Edit profile</title>
+  <!-- base:css -->
+  <link rel="stylesheet" href="/static/partner/vendors/mdi/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="/static/partner/vendors/css/vendor.bundle.base.css">
+  <!-- endinject -->
+  <!-- plugin css for this page -->
+  <!-- End plugin css for this page -->
+  <!-- inject:css -->
+  <link rel="stylesheet" href="/static/partner/css/style.css">
+  <!-- endinject -->
+  <link rel="shortcut icon" href="/static/partner/images/favicon.png" />
+</head>
+
+<body>
+  <div class="container-scroller d-flex">
+    <div class="container-fluid page-body-wrapper full-page-wrapper d-flex">
+      <div class="content-wrapper d-flex align-items-center auth px-0">
+        <div class="row w-100 mx-0">
+          <div class="col-lg-4 mx-auto">
+            <div class="auth-form-light text-left py-5 px-4 px-sm-5">
+              <div class="brand-logo">
+                <img src="/static/partner/images/Agoda_transparent_logo.png" alt="logo">
+              </div>
+              <h6 class="font-weight-light">Provide some personal information</h6>
+              <form id="userinfoForm" action="{% url 'userinfo' %}" method="POST" class="mb-3">
+                {% csrf_token %}
+                <div class="form-group">
+                  <label for="email" class="form-label">Email</label>
+                    <input type="text" class="form-control" id="email" name="email" required placeholder="Enter your email" value="{{ form.email.value|default:'' }}" {% if form.email.value %} readonly {% endif %} autofocus="autofocus" />
+                    <div class="text-danger">
+                                    {% if form.email.errors %}
+                                        {% for error in form.email.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    {% endif %}
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="fullname">Full name</label>
+                  <div class="input-group input-group-merge">
+                      <input type="text" class="form-control" id="fullname" name="name" required value="{{ form.name.value|default:'' }}" placeholder="Enter your fullname" autofocus="autofocus" />
+                  </div>
+                  <div class="text-danger">
+                      {% if form.name.errors %}
+                          {% for error in form.name.errors %}
+                              <p>{{ error }}</p>
+                          {% endfor %}
+                      {% endif %}
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="phonenumber">Phone number</label>
+                  <div class="input-group input-group-merge">
+                      <input type="text" class="form-control" id="phonenumber" name="phonenumber" required value="{{ form.phonenumber.value|default:'' }}" placeholder="Enter your phonenumber" autofocus="autofocus" />
+                  </div>
+                  <div class="text-danger">
+                      {% if form.phonenumber.errors %}
+                          {% for error in form.phonenumber.errors %}
+                              <p>{{ error }}</p>
+                          {% endfor %}
+                      {% endif %}
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <div class="form-check">
+                    <label class="form-check-label text-muted">
+                      <input type="checkbox" class="form-check-input">
+                      I am sure the information above is correct
+                    </label>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn">Complete</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- content-wrapper ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- container-scroller -->
+  <!-- base:js -->
+  <script src="/static/partner/vendors/js/vendor.bundle.base.js"></script>
+  <!-- endinject -->
+  <!-- inject:js -->
+  <script src="/static/partner/js/off-canvas.js"></script>
+  <script src="/static/partner/js/hoverable-collapse.js"></script>
+  <script src="/static/partner/js/template.js"></script>
+  <!-- endinject -->
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+{% extends 'customer/base_layout.html' %}
+{% block content %}
+<div class="container" style=" max-width: 95%;margin-top: 15px;margin-bottom: 15px;">
+    <div class="row">
+    <div class="col-lg-3">
+        <nav class="sidebar-nav">
+            <ul id="sidebarnav">
+                <li class="sidebar-item"> 
+                    <a class="sidebar-link sidebar-link {% if request.path == '/customer/profile/' %}active{% endif %}"
+                        href="/customer/profile/" aria-expanded="false"><i
+                            class="feather-icon fas fa-address-book"></i><span class="hide-menu">Hồ sơ cá
+                            nhân</span></a></li>
+                <li class="sidebar-item"> <a class="sidebar-link" href="ticket-list.html"
+                        aria-expanded="false"><i class="feather-icon fas fa-tag"></i><span
+                            class="hide-menu">Đơn đặt chỗ
+                        </span></a>
+                </li>
+                <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="app-chat.html"
+                        aria-expanded="false"><i class="feather-icon  far fa-star"></i><span
+                            class="hide-menu">Nhận xét của tôi</span></a></li>
+                <li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="app-chat.html"
+                        aria-expanded="false"><i data-feather="message-square" class="feather-icon"></i><span
+                            class="hide-menu">Liên hệ với khách sạn</span></a></li>
+            </ul>
+        </nav>
+        <!-- End Sidebar navigation -->
+    </div>
+    <div class="sub-container" style=" padding-top: 20px;flex:1;">
+        {% block sub_content%}
+        {% endblock %}
+    </div>
+</div>
+</div>
+<style>
+    nav.sidebar-nav {
+    width: 250px;
+    background: #ffffff;
+    padding-top: 20px;
+}
+
+#sidebarnav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    padding: 10px 20px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    color: #000000;
+    font-size: 1.05rem;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background 0.3s, color 0.3s;
+}
+
+.sidebar-link i {
+    margin-right: 10px;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: linear-gradient(to right, #e7a86c, #eaad70, #f0be8c, #ebd0b5, #fbefe4);
+    box-shadow: 0 7px 12px 0 rgba(95, 118, 232, .21);
+    border-radius: 0 60px 60px 0;
+    color: #ffffff;
+}
+
+.list-divider {
+    height: 1px;
+    background: #34495e;
+    margin: 10px 0;
+}
+
+.nav-small-cap {
+    color: #bdc3c7;
+    padding: 10px 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.hide-menu {
+    flex-grow: 1;
+}
+
+</style>
+{% endblock %}

@@ -1,0 +1,415 @@
+{% extends "partner/base_layout.html" %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>
+<div class="row">        
+    <div class="col-lg-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <div  style="display: flex;flex-direction: row; align-items: center;justify-content: space-between;">
+            <div style="display: flex;flex-direction: row; align-items: center;gap:15px;">
+              <h4 class="card-title" style="margin: 0;">Order</h4>
+                
+            </div>
+           <div style="display: flex;justify-content: flex-end;">
+            <a href="/partner/hotel" class="nav-link icon-link add-hotel" style="    text-decoration: none;color: black;font-size: xx-large; padding: 2px 5px;">
+              <i class="mdi mdi-keyboard-return"></i>
+           </a>
+           </div>
+          </div>
+          <div class="content-order">
+            <div class="tabs">
+                <div class="tab active" data-tab="upcoming">Upcoming</div>
+                <div class="tab" data-tab="completed">Completed</div>
+                <div class="tab" data-tab="canceled">Canceled</div>
+            </div>
+            <div class="order-content">
+                
+            </div>
+        </div>
+        </div>
+      </div>
+    </div>           
+  </div>
+  <style>
+    a.nav-link.icon-link.add-hotel:hover {
+    color: #50cc67 !important;
+    background-color: #d5ffdd99;
+    border-radius: 50px;
+    box-shadow: 0px -1px 9px #a6fab699;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+    const token_partner = localStorage.getItem('partner_token');
+    if (!token_partner) {
+        alert('Bạn chưa đăng nhập hoặc token đã hết hạn.');
+        return;
+    }
+    const csrftoken=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const idhotel = "{{ hotel_id }}";
+    const orderContent = document.querySelector('.order-content');
+    const tbody = document.querySelector('.table-hotel tbody');
+    let orders = { upcoming: [], completed: [], canceled: [] };
+
+    async function LoadMyOrder() {
+        try {
+            const response = await fetch(`/lst_order/${idhotel}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token_partner}` }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                orders = {
+                    upcoming: result.upcoming || [],
+                    completed: result.complete || [],
+                    canceled: result.cancel || [],        
+                };
+                console.log(orders['upcoming']);
+                updateTabContent('upcoming');
+            } else {
+                orderContent.innerHTML = "<p>Lỗi tải dữ liệu</p>";
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải đơn hàng:", error);
+            orderContent.innerHTML = "<p>Lỗi kết nối</p>";
+        }
+    }
+
+    function updateTabContent(tabName) {
+        let contentDiv = document.querySelector('.order-content');
+        let data = orders[tabName];
+   
+        contentDiv.innerHTML='';
+        if (data.length === 0) { 
+            contentDiv.classList.remove('order-content-detail');
+            contentDiv.innerHTML = `<div class="icon">🏨</div><p>Không có đơn hàng nào</p>`;
+        } else {
+            data.map(order => {
+                const item= document.createElement('div');
+                item.classList.add('order-content-detail');
+      
+            let orderItems=order.details.map(detail =>
+            {
+                let checkOutButton = `
+                    <button type="button" data-iddetail="${detail.iddetail}" data-idbook-room="${order.idbook}" data-status="${detail.status}" class="update-button single-update">
+                        <i class="fa-solid fa-check-to-slot"></i><span> Check out</span>
+                    </button>
+                `;
+
+                let cancelButton = (detail.status === "Booked") ? `
+                    <button type="button" data-iddetail="${detail.iddetail}" data-idbook-room="${order.idbook}" class="cancel-button single-cancel">
+                        <i class="fa-solid fa-xmark"></i><span> Cancel room</span>
+                    </button>
+                ` : '';
+
+                let updateStatusButton = checkOutButton + cancelButton;    
+
+            item.setAttribute("data-iddetail",detail.iddetail);   
+            return `
+                <div class="order-item">
+                   <img src="${detail.hotel_img}" alt="Hotel Image" style="width: 150px;">
+                    <div class="cart-item-details">
+                        <div style="display: flex;flex-direction: column;gap: 10px;text-align: left;font-size: 14px;">
+                         <h5>${detail.hotel}</h5>
+                         ${updateStatusButton}
+                        <div>
+                            <i class="fa-solid fa-user"></i>
+                            ${order.customer}
+                        </div>
+                        <div>
+                            1x ${detail.type_room}
+                            <span style="padding: 0px 10px 0px 10px;color: #4b7dd2;"><i class="fa-solid fa-calendar-days"></i> ${detail.date_arrive} — ${detail.date_leave}</span>
+                            <span style="color: #338e14;font-weight: 600;padding: 0px 10px 0px 10px;">${order.payment}</span>
+                            <span style="color: #e72a2a;font-weight: 500;padding: 0px 10px 0px 10px;">${detail.price_total.toLocaleString('vi-VN')} VNĐ</span>
+                            <span>Trạng thái: ${detail.status}</span>
+                        </div>
+                        </div>
+                    </div>           
+                </div>
+            `}).join('');
+            item.innerHTML=`       
+            ${orderItems}
+            `; 
+            contentDiv.appendChild(item);
+        }).join('');
+       
+        document.querySelectorAll('.order-content-detail').forEach(item => {
+    item.addEventListener('click', function (event) {
+        if (event.target.closest(".single-cancel,.single-update")) {
+            event.stopPropagation();
+            return;
+        }
+        const iddetail = item.getAttribute('data-iddetail');
+        const show_detail = data.map(order => 
+            order.details.map(detail => {
+                if (detail.iddetail == iddetail) {
+                    return `
+                        <ul style="list-style: none;text-align: justify;">
+                            <li>
+                                <img src="${detail.room_img}" alt="Room Image" style="width: 150px;border-radius: 8px;">
+                                <i class="fas fa-caret-right" style="font-size: large;"></i> ${detail.type_room} | ${detail.area} m<sup>2</sup> | ${detail.bed}
+                                <ul style="padding: 10px 0px 10px 18px;list-style: circle;font-size: 16px;">
+                                    <li>Giá: ${detail.price.toLocaleString('vi-VN')} VNĐ/night</li>
+                                    <li>Sức chứa: ${detail.capacities?.map(capacity => `
+                                        ${capacity.quantity} ${capacity.type_person}
+                                    `).join(' ')}</li>
+                                    <li>Tiện ích: ${detail.utilities?.map(utility => `
+                                        <div><i class="fas fa-check-circle" style="color: #05aa05;"></i> ${utility.service_name}</div>
+                                    `).join('')}</li>
+                                </ul>
+                            </li>
+                        </ul>`;
+                }
+            }).join('')
+        ).join('');
+
+        if (show_detail.trim()) {  
+            Swal.fire({
+                title: 'Detail',
+                html: show_detail,
+                icon: 'info',
+                showConfirmButton: true,
+                confirmButtonText: 'Close',
+                showCancelButton: false,
+                customClass: {
+                    icon: 'swal-custom-icon',
+                }
+            });
+        }
+    });
+});
+
+document.querySelectorAll('.cancel-button').forEach(button => {
+    button.addEventListener('click', async function (event) {
+        const signleCancelBtn = event.target.closest(".single-cancel"); 
+        if (signleCancelBtn) {
+            const bookId = signleCancelBtn.getAttribute("data-idbook-room"); 
+            const detailId = signleCancelBtn.getAttribute("data-iddetail"); 
+            Swal.fire({
+                title:'Are you sure?',
+                text: 'Your room you placed will cancel',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                const response = await fetch('/cancel_order_or_room/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bear ${token_partner}`,
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idbook: bookId,iddetail:detailId }) 
+                });
+
+                const result = await response.json();
+                if(result.success){
+                    location.reload();
+                } else{
+                    console.error(result.error);
+                }
+            }
+        });
+        }
+    });
+});
+document.querySelectorAll('.update-button').forEach(button=>{
+    button.addEventListener('click',async function () {
+        const statusBtn = event.target.closest(".single-update"); 
+        if (statusBtn) {
+            const detailId = statusBtn.getAttribute("data-iddetail"); 
+            const bookId = statusBtn.getAttribute("data-idbook-room"); 
+            Swal.fire({
+                title:'Do you want to update order status?',
+                text: 'Please click Yes button to perform',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                const response = await fetch('/update_status_room/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bear ${token_partner}`,
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idbook: bookId,iddetail:detailId }) 
+                });
+
+                const result = await response.json();
+                if(result.success){
+                    location.reload();
+                } else{
+                    console.error(result.error);
+                }
+            }
+        });
+
+        }
+    });
+});
+        }
+        setTimeout(() => {
+        let updateButtons = document.querySelectorAll('.update-button');
+        let cancelButtons = document.querySelectorAll('.cancel-button');
+        let orderDetail=document.querySelectorAll('.order-content-detail');
+        updateButtons.forEach(button => {
+            button.style.display = tabName === "upcoming" ? "block" : "none";
+        });
+        cancelButtons.forEach(button => {
+            button.style.display = tabName === "upcoming" ? "block" : "none";
+        });
+        let statusButtons = document.querySelectorAll('.single-update');
+        statusButtons.forEach(button => {
+            const status = button.dataset.status;
+            const nextStatusMap = {
+                "Booked": "Check in",
+                "Check in": "Check out",
+                "Check out": "Completed"
+            };
+
+            if (tabName === "upcoming" && Object.keys(nextStatusMap).includes(status)) {
+                button.style.display = "block";
+                button.innerHTML = `<i class="fa-solid fa-check-to-slot"></i>
+                    <span style="padding:5px;">${nextStatusMap[status]}</span>`;
+            } else {
+                button.style.display = "none"; 
+            }
+        });
+        orderDetail.forEach(order => {
+            order.style.backgroundColor = tabName === "canceled" ? "#ffeeee96" : "#fffdfa96";
+        });
+    }, 100);
+    }
+
+    LoadMyOrder();
+    function changeTab(event, tabName) {
+    let tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    if (event.target) {
+        event.target.classList.add('active');
+    }
+
+    updateTabContent(tabName);
+}
+document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function (event) {
+            changeTab(event, this.dataset.tab);
+        });
+    });
+});
+
+ </script>
+  <style>
+    a[disabled] {
+      pointer-events: none;
+      opacity: 0.3;
+  }
+  .icon-feature{
+  padding:5px;
+  font-size: 20px;
+  }
+  .btn-feature{
+    padding: 12px 5px 8px 5px;
+    border-radius: 8px;
+    vertical-align: middle;
+    margin: 0 2px;
+    color:white;
+  }
+  .btn-feature:hover{
+    color:black;
+  }
+  .content-order {
+            width: 100%;
+            min-height: 255px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #dddddd7a;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            color: gray;
+        }
+        .tab.active {
+            color: #f3a558;;
+            border-bottom: 3px solid #ffbf7f;
+        }
+        .order-content {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .order-content-detail{
+            background-color: #fffdfa96;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            box-shadow: 0px 0px 9px 1px #b8b8b870;
+            cursor: pointer;
+        }
+
+        .order-item{
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 5px;
+        }
+        .rate-button,.update-button,.cancel-button{
+    border: 1px solid #fb7171;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    background-color: #f35454;
+    display: none;
+    }
+    .all-cancel{
+    position: absolute;
+    right: 65px;
+    font-size: 14px;
+    border: 1px solid #fb7171;
+    background-color: #f35454;
+    z-index: 1;
+    }
+    .single-cancel,.single-update{
+    position: absolute;
+    right: 0px;
+    top: 62px;
+    font-size: 12px;
+    border: 1px solid #088e32;
+    background-color: #ffffff;  
+    color: #088e32;
+    }
+
+    .single-cancel{
+        right: 100px;
+        border: 1px solid #f881af;
+        background-color: #fa70a6;
+        color: white;
+    }
+    .icon {
+            font-size: 50px;
+            color: #dfa974;
+        }
+
+  </style>
+{% endblock %}

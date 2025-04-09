@@ -1,0 +1,275 @@
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="/static/customer/css/payment/style.css">
+<link rel="stylesheet" href="/static/customer/css/payment/demo.css" />
+{% load static %}
+<link href="https://fonts.googleapis.com/css?family=Lora:400,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Cabin:400,500,600,700&display=swap" rel="stylesheet">
+<link rel="shortcut icon" href="{% static 'partner/images/favicon.png' %}" />
+<!-- Css Styles -->
+<link rel="stylesheet" href="{% static 'customer/css/bootstrap.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/font-awesome.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/elegant-icons.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/flaticon.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/owl.carousel.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/nice-select.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/jquery-ui.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/magnific-popup.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/slicknav.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'customer/css/style.css' %}" type="text/css">
+<script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="/static/customer/css/cart-css.css" type="text/css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <style>
+        .menu-item {
+            -webkit-box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+            box-shadow: 0px 12px 15px rgba(36, 11, 12, 0.05);
+        }
+
+        #status {
+            color: white;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        #card {
+            box-shadow: 1px 1px 20px 8px #b6b6b640;
+        }
+
+        .flag-dropdown ul li{
+    padding: 10px 0;
+    list-style: none;
+    text-align: left;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: 500;
+    }
+    .flag-dropdown{
+    cursor: pointer;
+    float: right;
+    position: absolute;
+    right: 110px;
+    top: 65px;
+    box-shadow: 0px 9px 10px rgba(25, 25, 26, 0.2);
+    z-index: 100;
+    min-width: 250px;
+    background: #ffffff;
+    display: block;
+    padding: 10px 15px;
+    }
+    .menu-item .nav-menu .mainmenu li.log-sign-up{
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    }
+    .menu-item .nav-menu .mainmenu li a {
+    font-weight:600;
+    }
+    </style>
+    <!-- Header Section Begin -->
+    <header class="header-section">
+        <div class="menu-item">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-2">
+                        <div class="logo" style="padding: 10px 0px;">
+                            <a href="/customer/home/">
+                                <img src="{% static 'customer/img/Agoda_transparent_logo.png' %}" alt=""
+                                    style="width: 110px;">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-10">
+                        <div class="nav-menu">
+                            <nav class="mainmenu">
+                                <ul>
+                                    <li class="{% if request.path == '/customer/home/' %}active{% endif %}"><a
+                                            href="/customer/home/">Home</a></li>
+                                    <li class="{% if request.path == '/customer/hotel/' %}active{% endif %}"><a
+                                            href="/customer/hotel/">Hotels</a></li>
+                                    <li><a href="./about-us.html">About Us</a></li>
+                                    <li><a href="./contact.html">Contact</a></li>
+                                    <li class="user-account"><img
+                                            src="{% static 'customer/img/cute-little-schoolboy-graduation.png' %}"
+                                            style="border: 1px solid #a7a5a57a;width: 40px;border-radius: 50%;" alt="">
+                                        <span id="name-user" style=" text-transform: uppercase;cursor: pointer;">
+                                        </span>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="flag-dropdown" style="display: none;">
+        <ul>
+            <li><a href="#" style="text-decoration: none;color: black;font-weight: 600;">Hồ sơ của tôi</a></li>
+            <li><a href="#" style="text-decoration: none;color: black;font-weight: 600;">Đơn đặt chỗ</a></li>
+            <li><a href="#" style="text-decoration: none;color: black;font-weight: 600;">Nhận xét của tôi</a></li>
+            <li id="log-out-user"><a style="text-decoration: none;color: black;font-weight: 600;" >Đăng xuất</a></li>
+        </ul>
+    </div>
+    <section style="    background-color: #fdfaf5;height: 100%;">
+        <div class="rt-container">
+            <div class="col-rt-12" style="    margin-top: 50px;">
+                <div class="Scriptcontent">
+
+                    <div id='card' class="animated fadeIn">
+                        <div id='upper-side'>
+
+                        </div>
+                        <div id='lower-side'>
+                            <p id='message' class="payment-result">
+
+                            </p>
+                            <p class="message"
+                                style="font-size: small;margin-top: -.5em;color: #757575;letter-spacing: 1px;">
+
+                            </p>
+                            <a href="/customer/home/" id="contBtn">Back to home page</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            customer_token=localStorage.getItem('customer_token')
+                if(customer_token){  
+                    document.querySelector('.user-account').style.display='inline-block';
+                            
+                    customer_name=localStorage.getItem('customer_name');
+                    if(customer_name){
+                        document.getElementById('name-user').innerHTML=`${customer_name} <i class="fa fa-angle-down"></i>`;
+                    }
+                    const userName = document.getElementById('name-user');
+                    const dropdown = document.querySelector('.flag-dropdown');
+                    userName.addEventListener('click', function (event) {
+                        dropdown.style.display = 'block';
+                        event.stopPropagation();
+                    });
+                    document.addEventListener('click', function () {
+                        dropdown.style.display = 'none';
+                    });
+                    dropdown.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                    });
+                    document.getElementById('log-out-user').addEventListener('click',function(){
+                        localStorage.removeItem('customer_name');
+                        localStorage.removeItem('customer_token');
+                        localStorage.removeItem('count_item');
+                        window.location.href='/login/';
+                    });
+                } else{
+                    window.location.href='/login/';
+                }
+
+            const params = new URLSearchParams(window.location.search);
+            const paymentId = params.get('paymentId');
+            const payerId = params.get('PayerID');
+            const status = params.get('status');
+            const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            if (payerId && paymentId) {
+                const response = await fetch('/success_paypal/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ payerId, paymentId })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Result_payment();
+                } else {
+                    console.error(result.error)
+                }
+            } else if (status) {
+                const response = await fetch('/success_zalopay/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ status })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Result_payment();
+                } else {
+                    console.error(result.error)
+                }
+            }
+            else {
+                Result_payment();
+            }
+            async function Result_payment() {
+                const response = await fetch('/return_page/', {
+                    method: 'GET'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.querySelector('.payment-result').innerHTML = `${result.data.title}`;
+                    document.querySelector('.message').innerHTML = `${result.data.message}`;
+                    if (result.data.status == 1) {
+                        document.getElementById('upper-side').innerHTML = `
+                    <svg version="1.1" id="checkmark" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" xml:space="preserve">
+                        <path d="M131.583,92.152l-0.026-0.041c-0.713-1.118-2.197-1.447-3.316-0.734l-31.782,20.257l-4.74-12.65
+                        c-0.483-1.29-1.882-1.958-3.124-1.493l-0.045,0.017c-1.242,0.465-1.857,1.888-1.374,3.178l5.763,15.382
+                        c0.131,0.351,0.334,0.65,0.579,0.898c0.028,0.029,0.06,0.052,0.089,0.08c0.08,0.073,0.159,0.147,0.246,0.209
+                        c0.071,0.051,0.147,0.091,0.222,0.133c0.058,0.033,0.115,0.069,0.175,0.097c0.081,0.037,0.165,0.063,0.249,0.091
+                        c0.065,0.022,0.128,0.047,0.195,0.063c0.079,0.019,0.159,0.026,0.239,0.037c0.074,0.01,0.147,0.024,0.221,0.027
+                        c0.097,0.004,0.194-0.006,0.292-0.014c0.055-0.005,0.109-0.003,0.163-0.012c0.323-0.048,0.641-0.16,0.933-0.346l34.305-21.865
+                        C131.967,94.755,132.296,93.271,131.583,92.152z" />
+                        <circle fill="none" stroke="#ffffff" stroke-width="5" stroke-miterlimit="10" cx="109.486" cy="104.353" r="32.53" />
+                    </svg>
+                        <h3 id='status'>
+                            Success
+                        </h3>
+                    `;
+                        document.getElementById('upper-side').style.backgroundColor = '#8BC34A';
+                        document.getElementById('contBtn').style.backgroundColor = '#8BC34A';
+                    } else if (result.data.status == -1){
+                        document.getElementById('upper-side').innerHTML = `
+                    <svg version="1.1" id="checkmark" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" xml:space="preserve">
+                        <path d="M131.583,92.152l-0.026-0.041c-0.713-1.118-2.197-1.447-3.316-0.734l-31.782,20.257l-4.74-12.65
+                        c-0.483-1.29-1.882-1.958-3.124-1.493l-0.045,0.017c-1.242,0.465-1.857,1.888-1.374,3.178l5.763,15.382
+                        c0.131,0.351,0.334,0.65,0.579,0.898c0.028,0.029,0.06,0.052,0.089,0.08c0.08,0.073,0.159,0.147,0.246,0.209
+                        c0.071,0.051,0.147,0.091,0.222,0.133c0.058,0.033,0.115,0.069,0.175,0.097c0.081,0.037,0.165,0.063,0.249,0.091
+                        c0.065,0.022,0.128,0.047,0.195,0.063c0.079,0.019,0.159,0.026,0.239,0.037c0.074,0.01,0.147,0.024,0.221,0.027
+                        c0.097,0.004,0.194-0.006,0.292-0.014c0.055-0.005,0.109-0.003,0.163-0.012c0.323-0.048,0.641-0.16,0.933-0.346l34.305-21.865
+                        C131.967,94.755,132.296,93.271,131.583,92.152z" />
+                        <circle fill="none" stroke="#ffffff" stroke-width="5" stroke-miterlimit="10" cx="109.486" cy="104.353" r="32.53" />
+                    </svg>
+                        <h3 id='status'>
+                            Success
+                        </h3>
+                    `;
+                        document.getElementById('upper-side').style.backgroundColor = '#8BC34A';
+                        document.getElementById('contBtn').style.backgroundColor = '#8BC34A';
+                    } 
+                    else{
+                        document.getElementById('upper-side').innerHTML = `
+                   <svg version="1.1" id="checkmark" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" xml:space="preserve">
+                        <!-- Vòng tròn -->
+                        <circle fill="none" stroke="#ffffff" stroke-width="5" stroke-miterlimit="10" cx="109.486" cy="104.353" r="32.53" />
+                        <!-- Dấu X -->
+                        <line x1="95" y1="90" x2="124" y2="118" stroke="#ffffff" stroke-width="5" stroke-linecap="round" />
+                        <line x1="124" y1="90" x2="95" y2="118" stroke="#ffffff" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                    <h3 id='status'>
+                        Failure
+                    </h3>
+                    `;
+                        document.getElementById('upper-side').style.backgroundColor = '#fd7070';
+                        document.getElementById('contBtn').style.backgroundColor = '#fd7070';
+                    }
+                }
+            }
+        });
+    </script>

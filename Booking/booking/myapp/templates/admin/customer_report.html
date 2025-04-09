@@ -1,0 +1,232 @@
+{% extends 'admin/base_layout.html' %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://kit.fontawesome.com/6b8a71fb94.js" crossorigin="anonymous"></script>
+<section class="section">
+    <div class="section-header">
+        <h1>Customer report</h1>
+    </div>
+    <div class="section-body">
+        <div class="row">
+            <div class="card" style="flex-grow: 1;">
+                <div class="card-header" style="justify-content: flex-end;">
+                    <button class="btn btn-primary sendEmail"  data-group="potential"><i
+                            class="fa-regular fa-envelope"></i> Send Email</button>
+                </div>
+                <div class="card-body">
+                    <div class="section-title mt-0">Khách hàng tiềm năng</div>
+                    <table class="table table-bordered table-potential" style="table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th>Customer email</th>
+                                <th>Recency</th>
+                                <th>Frequency</th>
+                                <th>Monetary</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                           
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="card" style="flex-grow: 1;">
+            <div class="card-header" style="justify-content: flex-end;">
+                <button class="btn btn-primary sendEmail" data-group="inactive"><i
+                        class="fa-regular fa-envelope"></i> Send Email</button>
+            </div>
+            <div class="card-body">
+                <div class="section-title mt-0">Khách hàng ít quan tâm</div>
+                <table class="table table-bordered table-inactive" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th>Customer email</th>
+                            <th>Recency</th>
+                            <th>Frequency</th>
+                            <th>Monetary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+<style>
+
+    .swal-button {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #ffffff;
+        letter-spacing: 2px;
+        border: none;
+        padding: 14px 34px 13px;
+        width: 150px;
+    }
+    .swal-button:focus {
+    box-shadow: none;
+    border: none;
+    outline: 1px solid black;
+}
+
+    .custom-confirm {
+        background: #dfa974;
+    }
+
+    .custom-cancel {
+        background: #6e7881;
+    }
+    .swal2-validation-message {
+        font-family: auto;
+}
+.swal2-popup {
+    font-family: system-ui !important;
+}
+
+</style>
+<script>
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    admin_token = localStorage.getItem('admin_token');
+    list_customer={potential:[],inactive:[]}
+    document.addEventListener('DOMContentLoaded', async function () {
+
+        const response = await fetch('/potential_customers/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bear ${admin_token}`,
+                'X-CSRFToken': csrftoken,
+            },
+        });
+        const result = await response.json();
+        if(result.success){
+        list_customer.potential = result.top_customers||[];
+        list_customer.inactive = result.inactive_customers||[];
+  
+        renderTable(list_customer.potential,'table-potential');
+        renderTable(list_customer.inactive,'table-inactive');
+        } 
+        document.querySelectorAll('.sendEmail').forEach(button => {
+            button.addEventListener('click', async function () {
+            group=button.getAttribute('data-group');
+            FormSendEmail(group,admin_token,csrftoken)
+            });
+});
+function FormSendEmail(group,admin_token,csrftoken)
+{
+    let emails=[];
+
+    if(group=='potential'){
+        emails = list_customer.potential.map(customer => customer.customer_email);
+    } else {
+        emails = list_customer.inactive.map(customer => customer.customer_email);
+    }
+    Swal.fire({
+           title: 'Send email',
+           html: `
+         <div class="container">
+           <form class="contact-form">
+              <div style="display: flex;flex-direction: column;gap: 15px;">
+                   <div>
+                       <input id="title" class= "form-control" type="text" placeholder="Enter title">
+                   </div>
+                   <div>
+                       <textarea id="message" style=" height: 150px !important;" class= "form-control" placeholder="Your Message"></textarea>
+                   </div>
+               </div>
+           </form>
+</div>
+           `,
+           showCancelButton: true,
+           confirmButtonText: 'Gửi',
+           customClass: {
+       confirmButton: 'swal-button custom-confirm',
+       cancelButton:'swal-button custom-cancel'
+   },
+           preConfirm: () => {
+               const title = document.getElementById('title').value;
+               const message = document.getElementById('message').value;
+
+               if (!title || !message) {
+                   Swal.showValidationMessage('Vui lòng nhập đầy đủ thông tin!');
+                   return false;
+               }
+
+               return {title,message};
+           }
+       }).then((result) => {
+           if (result.isConfirmed) {
+                async function Contact() {
+                    Swal.fire({
+                    title: 'Sending email...',
+                    text: 'Please waiting a moment!',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading(); 
+                    }
+                });
+                 const response=await fetch('/send_email/',{
+                   method:'POST',
+                   headers:{
+                       'Authorization':`Bear ${admin_token}`,
+                       'X-CSRFToken':csrftoken,
+                   },
+                   body:JSON.stringify({title:result.value.title,message:result.value.message,emails})
+                 });
+                 const send_email=await response.json();
+                 if(send_email.success){
+                   Swal.fire({
+                       icon: 'success',
+                       title: `Thành công!`
+                   });
+                 } else {
+                   Swal.fire({icon: 'warning',title: `Có lỗi xảy ra!`});
+               }
+               } 
+               Contact();
+           }
+       });
+}
+    function renderTable(data, tableClass) {
+    const tbody = document.querySelector(`.${tableClass} tbody`);
+    tbody.innerHTML = ''; 
+
+    data.forEach(element => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+                                <td>
+                                    ${element.customer_email}
+                                    <div class="table-links">
+                                        <a style="color: #6777ef;" class="font-weight-600"><img
+                                                src="/static/admin/assets/img/avatar/avatar-1.png" alt="avatar"
+                                                width="20" class="rounded-circle mr-1">    ${element.customer_name}</a>
+                                    </div>
+                                </td>
+                                <td>
+                                      ${element.recency} days before
+                                </td>
+                                <td>
+                                       ${element.frequency} times
+                                </td>
+                                <td>
+                                       ${element.monetary.toLocaleString('vi-VN')} VNĐ
+                                </td>
+        `;
+
+        tbody.append(row);
+    });
+}
+    });
+   
+</script>
+
+{% endblock %}

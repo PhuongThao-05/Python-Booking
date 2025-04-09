@@ -1,0 +1,158 @@
+{% extends "partner/base_layout.html" %}
+{% block content %}
+<div class="container statistic" style="background-color: white;min-width: 1187px;margin: 15px auto;padding: 16px;">
+    <div style="align-items: center;flex-direction: row;display: flex;gap: 30px;">
+        <h3>Thống kê</h3>
+        <div>
+            <label> Hotel:</label>
+            <select id="selectHotel"
+                style="height: 45px; min-width: 500px;;text-align: center;border: 1px solid #dadada;border-radius: 5px;margin-bottom: 0.5rem;"></select>
+        </div>
+        <div>
+            <label> Year:</label>
+            <select id="selectYear"
+                style="height: 45px;width: 100px;text-align: center;border: 1px solid #dadada;border-radius: 5px;margin-bottom: 0.5rem;"></select>
+        </div>
+    </div>
+    <canvas id="myChart" style="height: 504px;width: 1110px;"></canvas>
+</div>
+<script>
+    const token_partner = localStorage.getItem('partner_token');
+    const selectYear = document.getElementById('selectYear');
+    const selectHotel = document.getElementById('selectHotel');
+    let years = [];
+    let hotels = [];
+    async function fetchYearsAndHotels() {
+        const response = await fetch('/get_month_and_hotel/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token_partner
+            }
+        });
+        const result = await response.json();
+        if (result.success) {
+            years = result.year || [];
+            hotels = result.hotel || [];
+            console.log(years);
+            console.log(hotels);
+        } else {
+            console.error(result.error);
+        }
+        // Thêm các năm vào dropdown
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            selectYear.appendChild(option);
+        });
+        if (years.length > 0) {
+            const firstYear = years[0];
+            selectYear.value = firstYear;
+        } else {
+            console.error("Dữ liệu năm không có sẵn!");
+        }
+        hotels.forEach(hotel => {
+            const option = document.createElement('option');
+            option.value = hotel.idhotel;
+            option.textContent = hotel.hotel;
+            selectHotel.appendChild(option);
+        });
+        if (hotels.length > 0) {
+            const firstHotel = hotels[0].idhotel;
+            selectHotel.value = firstHotel;
+        } else {
+            console.error("Dữ liệu khách sạn không có sẵn!");
+        }
+        if (years.length > 0 && hotels.length > 0) {
+            StatisticRevenue(selectHotel.value, selectYear.value);
+        }
+    }
+    selectYear.addEventListener('change', handleSelectionChange);
+    selectHotel.addEventListener('change', handleSelectionChange);
+
+    function handleSelectionChange() {
+        const selectedYear = selectYear.value;
+        const selectedHotel = selectHotel.value;
+        StatisticRevenue(selectedHotel, selectedYear);
+    }
+
+    async function StatisticRevenue(selectedHotel, selectedYear) {
+        try {
+            const response = await fetch(`/revenue_by_month/${selectedHotel}/${selectedYear}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token_partner
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                const data = result.revenue_by_month;
+
+                if (!data || Object.keys(data).length === 0) {
+                    console.log("Không có dữ liệu doanh thu.");
+                    return;
+                }
+
+                const labels = Object.keys(data).map(month => `${selectedYear}-${String(month).padStart(2, '0')}`);
+                const revenue = Object.values(data);
+
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Tổng doanh thu',
+                                data: revenue,
+                                fill: true,
+                                pointRadius: 10,
+                                pointHoverRadius: 8,
+                                backgroundColor: 'rgba(153, 204, 255, 0.4)',
+                                borderColor: 'rgba(153, 204, 255, 1)',
+                                borderWidth: 2,
+                                tension: 0.4,  // 🔹 Làm mượt đường biểu đồ
+                                cubicInterpolationMode: 'monotone'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Thời gian (Tháng)' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Doanh thu' },
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        }
+                    }
+                };
+
+                if (window.myChart && typeof window.myChart.destroy === 'function') {
+                    window.myChart.destroy();
+                }
+
+                const ctx = document.getElementById('myChart').getContext('2d');
+                window.myChart = new Chart(ctx, config);
+
+            } else {
+                console.log("Lỗi API: " + result.message);
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API:", error);
+        }
+    }
+
+    fetchYearsAndHotels();
+
+</script>
+{% endblock %}
